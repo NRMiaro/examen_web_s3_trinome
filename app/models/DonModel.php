@@ -25,20 +25,43 @@ class DonModel
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
 
-    public function searchDons($search)
+    public function searchDons($search = '', $date_debut = '', $date_fin = '')
     {
-        $searchTerm = '%' . $search . '%';
+        $conditions = [];
+        $params = [];
+        
+        // Condition de recherche textuelle
+        if (!empty($search)) {
+            $searchTerm = '%' . $search . '%';
+            $conditions[] = "(d.date_don LIKE :search OR b.nom LIKE :search)";
+            $params[':search'] = $searchTerm;
+        }
+        
+        // Condition de date début
+        if (!empty($date_debut)) {
+            $conditions[] = "DATE(d.date_don) >= :date_debut";
+            $params[':date_debut'] = $date_debut;
+        }
+        
+        // Condition de date fin
+        if (!empty($date_fin)) {
+            $conditions[] = "DATE(d.date_don) <= :date_fin";
+            $params[':date_fin'] = $date_fin;
+        }
+        
+        $whereClause = !empty($conditions) ? 'WHERE ' . implode(' AND ', $conditions) : '';
+        
         $stmt = $this->db->prepare("
             SELECT d.id, d.date_don,
                    GROUP_CONCAT(CONCAT(b.nom, ': ', dd.quantite, ' kg') SEPARATOR ', ') as details
             FROM s3_don d
             LEFT JOIN s3_don_details dd ON d.id = dd.id_don
             LEFT JOIN s3_besoin b ON dd.id_besoin = b.id
-            WHERE d.date_don LIKE :search OR b.nom LIKE :search
+            {$whereClause}
             GROUP BY d.id
             ORDER BY d.date_don DESC
         ");
-        $stmt->execute([':search' => $searchTerm]);
+        $stmt->execute($params);
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
 

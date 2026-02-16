@@ -18,13 +18,19 @@
 <div class="card">
     <div class="card-body">
     <div class="table-toolbar">
-        <form method="GET" action="<?= BASE_URL ?>/dons" class="table-search-form" style="display: flex; gap: 10px; align-items: center;">
-            <div class="table-search" style="flex: 1;">
+        <form method="GET" action="<?= BASE_URL ?>/dons" class="table-search-form" style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+            <div class="table-search" style="flex: 1; min-width: 200px;">
                 <i class="bi bi-search"></i>
                 <input type="text" name="search" placeholder="Rechercher un don…" value="<?= htmlspecialchars($search ?? '') ?>">
             </div>
-            <button type="submit" class="btn btn-sm btn-outline">Chercher</button>
-            <?php if (!empty($search)): ?>
+            <div style="display: flex; gap: 8px; align-items: center;">
+                <label style="font-size: 0.85rem; color: var(--color-text-secondary);">Du:</label>
+                <input type="date" name="date_debut" class="form-input" style="padding: 6px 8px; font-size: 0.85rem; width: 140px;" value="<?= htmlspecialchars($date_debut ?? '') ?>">
+                <label style="font-size: 0.85rem; color: var(--color-text-secondary);">Au:</label>
+                <input type="date" name="date_fin" class="form-input" style="padding: 6px 8px; font-size: 0.85rem; width: 140px;" value="<?= htmlspecialchars($date_fin ?? '') ?>">
+            </div>
+            <button type="submit" class="btn btn-sm btn-outline">Filtrer</button>
+            <?php if (!empty($search) || !empty($date_debut) || !empty($date_fin)): ?>
             <a href="<?= BASE_URL ?>/dons" class="btn btn-sm btn-outline">Réinitialiser</a>
             <?php endif; ?>
         </form>

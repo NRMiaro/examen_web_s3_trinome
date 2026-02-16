@@ -20,9 +20,11 @@ class DonController
     public function index()
     {
         $search = Flight::request()->query->search ?? '';
+        $date_debut = Flight::request()->query->date_debut ?? '';
+        $date_fin = Flight::request()->query->date_fin ?? '';
         
-        if (!empty($search)) {
-            $dons = $this->model->searchDons($search);
+        if (!empty($search) || !empty($date_debut) || !empty($date_fin)) {
+            $dons = $this->model->searchDons($search, $date_debut, $date_fin);
         } else {
             $dons = $this->model->getAllDons();
         }
@@ -31,6 +33,8 @@ class DonController
             'page_title'  => 'Dons',
             'dons'        => $dons,
             'search'      => $search,
+            'date_debut'  => $date_debut,
+            'date_fin'    => $date_fin,
         ]);
     }
 
