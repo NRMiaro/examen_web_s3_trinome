@@ -50,6 +50,7 @@ class DashboardModel
                 v.id as ville_id,
                 v.nom as ville_nom,
                 DATE_FORMAT(bv.date_besoin, '%d/%m/%Y') as date_besoin,
+                b.id as id_besoin,
                 b.nom as besoin_nom,
                 b.prix as besoin_prix,
                 bvd.quantite,
@@ -94,6 +95,7 @@ class DashboardModel
             
             // Ajouter le produit à la demande
             $villes[$villeId]['demandes'][$besoinVilleId]['produits'][] = [
+                'id_besoin' => (int) $row['id_besoin'],
                 'nom' => $row['besoin_nom'],
                 'quantite' => (int) $row['quantite'],
                 'prix' => (int) $row['besoin_prix'],
