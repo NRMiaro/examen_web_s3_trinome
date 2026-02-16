@@ -16,22 +16,24 @@
             <form action="<?= $action ?? '/besoins' ?>" method="POST">
                 <div class="form-group">
                     <label class="form-label">Nom <span class="required">*</span></label>
-                    <input type="text" name="nom" class="form-input" placeholder="Ex: Riz" required>
+                    <input type="text" name="nom" class="form-input" placeholder="Ex: Riz" value="<?= htmlspecialchars($besoin['nom'] ?? '') ?>" required>
                 </div>
 
                 <div class="form-group">
                     <label class="form-label">Type <span class="required">*</span></label>
                     <select name="id_type_besoin" class="form-select" required>
                         <option value="">-- Sélectionner un type --</option>
-                        <option value="1">Nature</option>
-                        <option value="2">Matériel</option>
-                        <option value="3">Argent</option>
+                        <?php foreach ($types as $type): ?>
+                        <option value="<?= $type['id'] ?>" <?= (isset($besoin) && $besoin['id_type_besoin'] == $type['id']) ? 'selected' : '' ?>>
+                            <?= ucfirst(htmlspecialchars($type['nom'])) ?>
+                        </option>
+                        <?php endforeach; ?>
                     </select>
                 </div>
 
                 <div class="form-group">
                     <label class="form-label">Prix unitaire (Ar) <span class="required">*</span></label>
-                    <input type="number" name="prix" class="form-input" placeholder="1000" required>
+                    <input type="number" name="prix" class="form-input" placeholder="1000" value="<?= $besoin['prix'] ?? '' ?>" required>
                 </div>
 
                 <div class="form-actions">

@@ -36,26 +36,31 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <?php
-                    $besoins = [
-                        [1, 'Riz', 'nature', 1000],
-                        [2, 'Huile', 'nature', 4000],
-                    ];
-                    foreach ($besoins as $row):
-                    ?>
+                    <?php if (empty($besoins)): ?>
                     <tr>
-                        <td><?= $row[0] ?></td>
-                        <td><strong><?= $row[1] ?></strong></td>
-                        <td><span class="badge badge-neutral"><?= ucfirst($row[2]) ?></span></td>
-                        <td><?= number_format($row[3], 0, ',', ' ') ?> Ar</td>
+                        <td colspan="5" style="text-align: center; padding: 40px; color: var(--color-text-secondary);">
+                            <i class="bi bi-inbox" style="font-size: 2rem; display: block; margin-bottom: 12px;"></i>
+                            Aucun besoin enregistré
+                        </td>
+                    </tr>
+                    <?php else: ?>
+                    <?php foreach ($besoins as $besoin): ?>
+                    <tr>
+                        <td><?= $besoin['id'] ?></td>
+                        <td><strong><?= htmlspecialchars($besoin['nom']) ?></strong></td>
+                        <td><span class="badge badge-neutral"><?= ucfirst(htmlspecialchars($besoin['type_nom'])) ?></span></td>
+                        <td><?= number_format($besoin['prix'], 0, ',', ' ') ?> Ar</td>
                         <td>
                             <div class="actions">
-                                <a href="/besoins/<?= $row[0] ?>/modifier" class="btn btn-icon btn-outline btn-sm" title="Modifier"><i class="bi bi-pencil"></i></a>
-                                <button class="btn btn-icon btn-outline btn-sm" title="Supprimer" onclick="openModal('modal-delete')"><i class="bi bi-trash"></i></button>
+                                <a href="/besoins/<?= $besoin['id'] ?>/modifier" class="btn btn-icon btn-outline btn-sm" title="Modifier"><i class="bi bi-pencil"></i></a>
+                                <form method="POST" action="/besoins/<?= $besoin['id'] ?>/supprimer" style="display: inline;" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce besoin ?');">
+                                    <button type="submit" class="btn btn-icon btn-outline btn-sm" title="Supprimer"><i class="bi bi-trash"></i></button>
+                                </form>
                             </div>
                         </td>
                     </tr>
                     <?php endforeach; ?>
+                    <?php endif; ?>
                 </tbody>
             </table>
         </div>

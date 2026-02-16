@@ -35,24 +35,30 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <?php
-                    $dons = [
-                        [1, '16/02/2026', 'Riz: 2500 kg, Huile: 1200 L'],
-                    ];
-                    foreach ($dons as $row):
-                    ?>
+                    <?php if (empty($dons)): ?>
                     <tr>
-                        <td><?= $row[0] ?></td>
-                        <td><?= $row[1] ?></td>
-                        <td><?= $row[2] ?></td>
+                        <td colspan="4" style="text-align: center; padding: 40px; color: var(--color-text-secondary);">
+                            <i class="bi bi-inbox" style="font-size: 2rem; display: block; margin-bottom: 12px;"></i>
+                            Aucun don enregistré
+                        </td>
+                    </tr>
+                    <?php else: ?>
+                    <?php foreach ($dons as $don): ?>
+                    <tr>
+                        <td><?= $don['id'] ?></td>
+                        <td><?= date('d/m/Y H:i', strtotime($don['date_don'])) ?></td>
+                        <td><?= htmlspecialchars($don['details'] ?? 'Aucun détail') ?></td>
                         <td>
                             <div class="actions">
-                                <a href="/dons/<?= $row[0] ?>/modifier" class="btn btn-icon btn-outline btn-sm" title="Modifier"><i class="bi bi-pencil"></i></a>
-                                <button class="btn btn-icon btn-outline btn-sm" title="Supprimer" onclick="openModal('modal-delete')"><i class="bi bi-trash"></i></button>
+                                <a href="/dons/<?= $don['id'] ?>/modifier" class="btn btn-icon btn-outline btn-sm" title="Modifier"><i class="bi bi-pencil"></i></a>
+                                <form method="POST" action="/dons/<?= $don['id'] ?>/supprimer" style="display: inline;" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce don ?');">
+                                    <button type="submit" class="btn btn-icon btn-outline btn-sm" title="Supprimer"><i class="bi bi-trash"></i></button>
+                                </form>
                             </div>
                         </td>
                     </tr>
                     <?php endforeach; ?>
+                    <?php endif; ?>
                 </tbody>
             </table>
         </div>

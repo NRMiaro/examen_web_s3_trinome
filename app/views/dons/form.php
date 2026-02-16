@@ -16,19 +16,41 @@
             <form action="<?= $action ?? '/dons' ?>" method="POST">
                 <div class="form-group">
                     <label class="form-label">Date du don <span class="required">*</span></label>
-                    <input type="datetime-local" name="date_don" class="form-input" required>
+                    <input type="datetime-local" name="date_don" class="form-input" value="<?= isset($don) ? date('Y-m-d\TH:i', strtotime($don['date_don'])) : '' ?>" required>
                 </div>
 
                 <h4 style="margin: 24px 0 16px; font-size: 1rem; font-weight: 600;">Détails du don</h4>
 
                 <div id="don-details">
+                    <?php if (isset($details) && !empty($details)): ?>
+                        <?php foreach ($details as $detail): ?>
+                        <div class="form-row" style="align-items: end;">
+                            <div class="form-group">
+                                <label class="form-label">Besoin</label>
+                                <select name="besoins[]" class="form-select">
+                                    <option value="">-- Sélectionner --</option>
+                                    <?php foreach ($besoins as $besoin): ?>
+                                    <option value="<?= $besoin['id'] ?>" <?= $detail['id_besoin'] == $besoin['id'] ? 'selected' : '' ?>>
+                                        <?= htmlspecialchars($besoin['nom']) ?>
+                                    </option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Quantité</label>
+                                <input type="number" name="quantites[]" class="form-input" placeholder="1000" value="<?= $detail['quantite'] ?>">
+                            </div>
+                        </div>
+                        <?php endforeach; ?>
+                    <?php else: ?>
                     <div class="form-row" style="align-items: end;">
                         <div class="form-group">
                             <label class="form-label">Besoin</label>
                             <select name="besoins[]" class="form-select">
                                 <option value="">-- Sélectionner --</option>
-                                <option value="1">Riz</option>
-                                <option value="2">Huile</option>
+                                <?php foreach ($besoins as $besoin): ?>
+                                <option value="<?= $besoin['id'] ?>"><?= htmlspecialchars($besoin['nom']) ?></option>
+                                <?php endforeach; ?>
                             </select>
                         </div>
                         <div class="form-group">
@@ -36,6 +58,7 @@
                             <input type="number" name="quantites[]" class="form-input" placeholder="1000">
                         </div>
                     </div>
+                    <?php endif; ?>
                 </div>
 
                 <button type="button" class="btn btn-outline btn-sm" onclick="ajouterLigne()" style="margin-bottom: 20px;">
@@ -61,8 +84,9 @@ function ajouterLigne() {
         <div class="form-group">
             <select name="besoins[]" class="form-select">
                 <option value="">-- Sélectionner --</option>
-                <option value="1">Riz</option>
-                <option value="2">Huile</option>
+                <?php foreach ($besoins as $besoin): ?>
+                <option value="<?= $besoin['id'] ?>"><?= htmlspecialchars($besoin['nom']) ?></option>
+                <?php endforeach; ?>
             </select>
         </div>
         <div class="form-group">
