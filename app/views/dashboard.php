@@ -5,7 +5,9 @@
         <div class="page-header-icon"><i class="bi bi-geo-alt-fill"></i></div>
         <div class="page-header-text">
             <h1>Tableau de bord</h1>
-            <p>Besoins par ville et dons disponibles - miaro
+            <p>Besoins par ville et dons disponibles - taarriq</p>
+        </div>
+    </div>
 </div>
 
 <?php
