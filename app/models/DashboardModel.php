@@ -10,6 +10,21 @@ use Flight;
  */
 class DashboardModel
 {
+    /**
+     * Récupère la liste de toutes les villes
+     * @return array ['id' => nom, ...]
+     */
+    public static function getListeVilles(): array
+    {
+        $sql = "SELECT id, nom FROM s3_ville ORDER BY nom";
+        $statement = Flight::db()->query($sql);
+        $result = [];
+        while ($row = $statement->fetch(\PDO::FETCH_ASSOC)) {
+            $result[$row['id']] = $row['nom'];
+        }
+        return $result;
+    }
+
     public static function getDonsObtenus(): array
     {
         $sql = "SELECT * FROM v_qte_dons_obtenus";
@@ -24,12 +39,14 @@ class DashboardModel
 
     /**
      * Récupère les besoins par ville avec les détails
-     * @return array Liste des villes avec leurs besoins
+     * Hiérarchie : Ville > Besoin-Ville (demande) > Produits (besoins)
+     * @return array Liste des villes avec leurs demandes et produits
      */
     public static function getBesoinsParVille(): array
     {
         $sql = "
             SELECT 
+                bv.id as besoin_ville_id,
                 v.id as ville_id,
                 v.nom as ville_nom,
                 DATE_FORMAT(bv.date_besoin, '%d/%m/%Y') as date_besoin,
@@ -46,23 +63,37 @@ class DashboardModel
                 ON bvd.id_besoin = b.id
             JOIN s3_type_besoin tb 
                 ON b.id_type_besoin = tb.id
-            ORDER BY v.nom, b.nom
+            ORDER BY v.nom, bv.id, b.nom
         ";
         $statement = Flight::db()->query($sql);
         $rows = $statement->fetchAll(\PDO::FETCH_ASSOC);
 
-        // Regrouper par ville
+        // Regrouper par ville > besoin_ville > produits
         $villes = [];
         foreach ($rows as $row) {
             $villeId = $row['ville_id'];
+            $besoinVilleId = $row['besoin_ville_id'];
+            
+            // Créer la ville si elle n'existe pas
             if (!isset($villes[$villeId])) {
                 $villes[$villeId] = [
+                    'id' => $villeId,
                     'nom' => $row['ville_nom'],
-                    'date' => $row['date_besoin'],
-                    'besoins' => []
+                    'demandes' => []
                 ];
             }
-            $villes[$villeId]['besoins'][] = [
+            
+            // Créer la demande (besoin_ville) si elle n'existe pas
+            if (!isset($villes[$villeId]['demandes'][$besoinVilleId])) {
+                $villes[$villeId]['demandes'][$besoinVilleId] = [
+                    'id_besoin_ville' => $besoinVilleId,
+                    'date' => $row['date_besoin'],
+                    'produits' => []
+                ];
+            }
+            
+            // Ajouter le produit à la demande
+            $villes[$villeId]['demandes'][$besoinVilleId]['produits'][] = [
                 'nom' => $row['besoin_nom'],
                 'quantite' => (int) $row['quantite'],
                 'prix' => (int) $row['besoin_prix'],
@@ -70,6 +101,12 @@ class DashboardModel
                 'unite' => self::getUnite($row['besoin_nom'])
             ];
         }
+        
+        // Convertir en arrays et réindexer les demandes
+        foreach ($villes as &$ville) {
+            $ville['demandes'] = array_values($ville['demandes']);
+        }
+        
         return array_values($villes);
     }
 

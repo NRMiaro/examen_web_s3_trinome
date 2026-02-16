@@ -20,3 +20,5 @@ CREATE OR REPLACE VIEW v_qte_besoins_villes AS
     JOIN s3_besoin b 
         ON bvd.id_besoin = b.id
     GROUP BY b.id, b.nom
+
+CREATE OR REPLACE VIEW 

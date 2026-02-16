@@ -17,15 +17,17 @@ class DashboardController
     public function index()
     {
         // Récupérer les données depuis le Model (utilise la vue v_qte_dons_obtenus)
+        $liste_villes = DashboardModel::getListeVilles();
         $dons_disponibles = DashboardModel::getDonsObtenus();
-        $villes = DashboardModel::getBesoinsParVille();
+        $besoinsVilles = DashboardModel::getBesoinsParVille();
         $total_demande = DashboardModel::getTotalDemandeParBesoin();
 
         // Passer les données à la vue
         Flight::render('dashboard', [
             'page_title'       => 'Tableau de bord',
+            'liste_villes'     => $liste_villes,
             'dons_disponibles' => $dons_disponibles,
-            'villes'           => $villes,
+            'besoinsVilles'    => $besoinsVilles,
             'total_demande'    => $total_demande,
         ]);
     }

@@ -1,6 +1,6 @@
 <?php include __DIR__ . '/include/header.php'; ?>
 
-<div class="page-header">
+<div class="page-header">   
     <div class="page-header-left">
         <div class="page-header-icon"><i class="bi bi-geo-alt-fill"></i></div>
         <div class="page-header-text">
@@ -29,61 +29,47 @@
     <?php endforeach; ?>
 </div>
 
-<!-- Villes et besoins -->
-<?php foreach ($villes as $ville): ?>
-<div class="card" style="margin-bottom: 24px;">
-    <div class="card-header">
-        <div>
-            <h3><i class="bi bi-geo-alt-fill"></i> <?= htmlspecialchars($ville['nom']) ?></h3>
-            <small class="text-muted"><?= htmlspecialchars($ville['date']) ?></small>
+<!-- Demandes par ville -->
+<?php foreach ($besoinsVilles as $villeData): ?>
+<div style="margin-bottom: 40px;">
+    <h2 style="margin-bottom: 24px; padding-bottom: 12px; border-bottom: 2px solid var(--color-primary);">
+        <i class="bi bi-geo-alt-fill"></i> <?= htmlspecialchars($villeData['nom']) ?>
+    </h2>
+    
+    <?php foreach ($villeData['demandes'] as $demande): ?>
+    <div style="margin-left: 16px; margin-bottom: 24px; padding-left: 16px; border-left: 3px solid #ddd;">
+        <h3 style="margin-bottom: 16px; font-size: 1.1em;">
+            <i class="bi bi-calendar-event"></i> Demande du <?= htmlspecialchars($demande['date']) ?>
+        </h3>
+        
+        <?php foreach ($demande['produits'] as $produit): ?>
+        <div class="card" style="margin-bottom: 12px;">
+            <div class="card-header">
+                <div>
+                    <h4 style="margin: 0;"><?= htmlspecialchars($produit['nom']) ?></h4>
+                    <small class="text-muted">Type: <?= htmlspecialchars($produit['type']) ?></small>
+                </div>
+            </div>
+            <div class="card-body">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px;">
+                    <div>
+                        <strong>Quantité</strong>
+                        <p style="font-size: 1.3em; margin: 8px 0 0 0; color: var(--color-primary);">
+                            <?= number_format($produit['quantite'], 0, ',', ' ') ?> <span style="font-size: 0.75em;"><?= $produit['unite'] ?></span>
+                        </p>
+                    </div>
+                    <div>
+                        <strong>Disponible</strong>
+                        <p style="font-size: 1.3em; margin: 8px 0 0 0;">
+                            <?= number_format($dons_disponibles[$produit['nom']] ?? 0, 0, ',', ' ') ?> <span style="font-size: 0.75em;"><?= $produit['unite'] ?></span>
+                        </p>
+                    </div>
+                </div>
+            </div>
         </div>
+        <?php endforeach; ?>
     </div>
-    <div class="card-body" style="padding: 0;">
-        <div class="table-wrapper">
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th>Besoin</th>
-                        <th>Quantité demandée</th>
-                        <th>Dons disponibles</th>
-                        <th>Attribution</th>
-                        <th>Statut</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php foreach ($ville['besoins'] as $besoin): 
-                        $don_dispo = $dons_disponibles[$besoin['nom']] ?? 0;
-                        $attribution = min($besoin['quantite'], $don_dispo);
-                        $pourcentage = $besoin['quantite'] > 0 ? round(($attribution / $besoin['quantite']) * 100) : 0;
-                        
-                        if ($pourcentage >= 100) {
-                            $badge = 'badge-success';
-                            $statut = '✓ Couvert';
-                        } elseif ($pourcentage >= 50) {
-                            $badge = 'badge-warning';
-                            $statut = '△ Partiel';
-                        } else {
-                            $badge = 'badge-danger';
-                            $statut = '✗ Insuffisant';
-                        }
-                    ?>
-                    <tr>
-                        <td><strong><?= htmlspecialchars($besoin['nom']) ?></strong></td>
-                        <td><?= number_format($besoin['quantite'], 0, ',', ' ') ?> <?= $besoin['unite'] ?></td>
-                        <td><?= number_format($don_dispo, 0, ',', ' ') ?> <?= $besoin['unite'] ?></td>
-                        <td>
-                            <strong style="color: var(--color-primary);">
-                                <?= number_format($attribution, 0, ',', ' ') ?> <?= $besoin['unite'] ?>
-                            </strong>
-                            <small class="text-muted">(<?= $pourcentage ?>%)</small>
-                        </td>
-                        <td><span class="badge <?= $badge ?>"><?= $statut ?></span></td>
-                    </tr>
-                    <?php endforeach; ?>
-                </tbody>
-            </table>
-        </div>
-    </div>
+    <?php endforeach; ?>
 </div>
 <?php endforeach; ?>
 
