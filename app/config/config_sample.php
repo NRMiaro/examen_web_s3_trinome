@@ -14,7 +14,7 @@
  **********************************************/
 
 /**********************************************
- *         Application Environment            *
+ *         Application Environment            * 
  **********************************************/
 // Set your timezone (e.g., 'America/New_York', 'UTC')
 date_default_timezone_set('UTC');

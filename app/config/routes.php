@@ -1,30 +1,50 @@
 <?php
 
+use app\controllers\DashboardController;
+use app\controllers\CollecteController;
+use app\controllers\DistributionController;
+use app\controllers\BesoinController;
 use app\controllers\ApiExampleController;
 use app\middlewares\SecurityHeadersMiddleware;
-use flight\Engine;
 use flight\net\Router;
+use flight\Engine;
 
-/** 
- * @var Router $router 
- * @var Engine $app
- */
+$router->group('', function (Router $router) use ($app) {
 
-// This wraps all routes in the group with the SecurityHeadersMiddleware
-$router->group('', function(Router $router) use ($app) {
+    $router->get('/', function () use ($app) {
+        $controller = new DashboardController($app);
+        $controller->index();
+    });
 
-	$router->get('/', function() use ($app) {
-		$app->render('welcome', [ 'message' => 'Examen S3' ]);
-	});
+    $router->group('/collectes', function () use ($router, $app) {
 
-	$router->get('/hello-world/@name', function($name) {
-		echo '<h1>Hello world! Oh hey '.$name.'!</h1>';
-	});
+        $router->get('', function () use ($app) {
+            $controller = new CollecteController($app);
+            $controller->index();
+        });
 
-	$router->group('/api', function() use ($router) {
-		$router->get('/users', [ ApiExampleController::class, 'getUsers' ]);
-		$router->get('/users/@id:[0-9]', [ ApiExampleController::class, 'getUser' ]);
-		$router->post('/users/@id:[0-9]', [ ApiExampleController::class, 'updateUser' ]);
-	});
-	
-}, [ SecurityHeadersMiddleware::class ]);
+        $router->get('/nouveau', function () use ($app) {
+            $controller = new CollecteController($app);
+            $controller->create();
+        });
+    });
+
+    $router->group('/distributions', function () use ($router, $app) {
+
+        $router->get('', function () use ($app) {
+            $controller = new DistributionController($app);
+            $controller->index();
+        });
+
+        $router->get('/nouveau', function () use ($app) {
+            $controller = new DistributionController($app);
+            $controller->create();
+        });
+    });
+
+    $router->get('/besoins', function () use ($app) {
+        $controller = new BesoinController($app);
+        $controller->index();
+    });
+
+}, [SecurityHeadersMiddleware::class]);
