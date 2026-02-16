@@ -2,120 +2,118 @@
 
 <div class="page-header">
     <div class="page-header-left">
-        <div class="page-header-icon"><i class="bi bi-grid-1x2"></i></div>
+        <div class="page-header-icon"><i class="bi bi-geo-alt-fill"></i></div>
         <div class="page-header-text">
             <h1>Tableau de bord</h1>
-            <p>Vue d'ensemble des collectes et distributions</p>
+            <p>Besoins par ville et dons disponibles</p>
         </div>
-    </div>
-    <div class="page-header-actions">
-        <a href="/collectes/nouveau" class="btn btn-primary">
-            <i class="bi bi-plus-lg"></i> Nouvelle collecte
-        </a>
-        <button class="btn btn-outline">
-            <i class="bi bi-download"></i> Exporter
-        </button>
     </div>
 </div>
 
+<?php
+// Dons disponibles
+$dons_disponibles = [
+    'Riz' => 2500,
+    'Huile' => 1200
+];
+
+// Besoins par ville
+$villes = [
+    [
+        'nom' => 'Antananarivo',
+        'date' => '16/02/2026',
+        'besoins' => [
+            ['nom' => 'Riz', 'quantite' => 1000, 'unite' => 'kg'],
+            ['nom' => 'Huile', 'quantite' => 500, 'unite' => 'L']
+        ]
+    ],
+    [
+        'nom' => 'Mahajanga',
+        'date' => '16/02/2026',
+        'besoins' => [
+            ['nom' => 'Riz', 'quantite' => 2000, 'unite' => 'kg'],
+            ['nom' => 'Huile', 'quantite' => 1000, 'unite' => 'L']
+        ]
+    ]
+];
+?>
+
+<!-- Dons disponibles -->
 <div class="stats-grid">
     <div class="stat-card">
-        <div class="stat-icon blue"><i class="bi bi-box-seam"></i></div>
+        <div class="stat-icon green"><i class="bi bi-gift-fill"></i></div>
         <div class="stat-content">
-            <h3>Total collectes</h3>
-            <div class="stat-value">1 248</div>
-            <div class="stat-trend up"><i class="bi bi-arrow-up"></i> +12.5% ce mois</div>
+            <h3>Riz disponible</h3>
+            <div class="stat-value">2 500 kg</div>
+            <div class="stat-trend up">Pour 3 000 kg demandés</div>
         </div>
     </div>
     <div class="stat-card">
-        <div class="stat-icon green"><i class="bi bi-send"></i></div>
+        <div class="stat-icon blue"><i class="bi bi-droplet-fill"></i></div>
         <div class="stat-content">
-            <h3>Distributions</h3>
-            <div class="stat-value">876</div>
-            <div class="stat-trend up"><i class="bi bi-arrow-up"></i> +8.2% ce mois</div>
-        </div>
-    </div>
-    <div class="stat-card">
-        <div class="stat-icon orange"><i class="bi bi-clipboard-check"></i></div>
-        <div class="stat-content">
-            <h3>Besoins en attente</h3>
-            <div class="stat-value">342</div>
-            <div class="stat-trend down"><i class="bi bi-arrow-down"></i> -3.1% ce mois</div>
-        </div>
-    </div>
-    <div class="stat-card">
-        <div class="stat-icon red"><i class="bi bi-geo-alt"></i></div>
-        <div class="stat-content">
-            <h3>Villes couvertes</h3>
-            <div class="stat-value">24</div>
-            <div class="stat-trend up"><i class="bi bi-arrow-up"></i> +2 nouvelles</div>
+            <h3>Huile disponible</h3>
+            <div class="stat-value">1 200 L</div>
+            <div class="stat-trend up">Pour 1 500 L demandés</div>
         </div>
     </div>
 </div>
 
-<div class="card">
+<!-- Villes et besoins -->
+<?php foreach ($villes as $ville): ?>
+<div class="card" style="margin-bottom: 24px;">
     <div class="card-header">
-        <h3>Dernières collectes</h3>
-        <a href="/collectes" class="btn btn-sm btn-outline">Voir tout</a>
+        <div>
+            <h3><i class="bi bi-geo-alt-fill"></i> <?= $ville['nom'] ?></h3>
+            <small class="text-muted"><?= $ville['date'] ?></small>
+        </div>
     </div>
     <div class="card-body" style="padding: 0;">
         <div class="table-wrapper">
             <table class="data-table">
                 <thead>
                     <tr>
-                        <th>#</th>
-                        <th>Date</th>
-                        <th>Ville</th>
                         <th>Besoin</th>
-                        <th>Quantité</th>
+                        <th>Quantité demandée</th>
+                        <th>Dons disponibles</th>
+                        <th>Attribution</th>
                         <th>Statut</th>
                     </tr>
                 </thead>
                 <tbody>
+                    <?php foreach ($ville['besoins'] as $besoin): 
+                        $don_dispo = $dons_disponibles[$besoin['nom']] ?? 0;
+                        $attribution = min($besoin['quantite'], $don_dispo);
+                        $pourcentage = $besoin['quantite'] > 0 ? round(($attribution / $besoin['quantite']) * 100) : 0;
+                        
+                        if ($pourcentage >= 100) {
+                            $badge = 'badge-success';
+                            $statut = '✓ Couvert';
+                        } elseif ($pourcentage >= 50) {
+                            $badge = 'badge-warning';
+                            $statut = '△ Partiel';
+                        } else {
+                            $badge = 'badge-danger';
+                            $statut = '✗ Insuffisant';
+                        }
+                    ?>
                     <tr>
-                        <td>1</td>
-                        <td>15/02/2026</td>
-                        <td>Antananarivo</td>
-                        <td>Eau potable</td>
-                        <td>100 litres</td>
-                        <td><span class="badge badge-success">Délivré</span></td>
+                        <td><strong><?= $besoin['nom'] ?></strong></td>
+                        <td><?= number_format($besoin['quantite'], 0, ',', ' ') ?> <?= $besoin['unite'] ?></td>
+                        <td><?= number_format($don_dispo, 0, ',', ' ') ?> <?= $besoin['unite'] ?></td>
+                        <td>
+                            <strong style="color: var(--color-primary);">
+                                <?= number_format($attribution, 0, ',', ' ') ?> <?= $besoin['unite'] ?>
+                            </strong>
+                            <small class="text-muted">(<?= $pourcentage ?>%)</small>
+                        </td>
+                        <td><span class="badge <?= $badge ?>"><?= $statut ?></span></td>
                     </tr>
-                    <tr>
-                        <td>2</td>
-                        <td>14/02/2026</td>
-                        <td>Mahajanga</td>
-                        <td>Couvertures</td>
-                        <td>50 unités</td>
-                        <td><span class="badge badge-warning">En attente</span></td>
-                    </tr>
-                    <tr>
-                        <td>3</td>
-                        <td>13/02/2026</td>
-                        <td>Mahajanga</td>
-                        <td>Nourriture</td>
-                        <td>200 portions</td>
-                        <td><span class="badge badge-success">Délivré</span></td>
-                    </tr>
-                    <tr>
-                        <td>4</td>
-                        <td>12/02/2026</td>
-                        <td>Antananarivo</td>
-                        <td>Médicaments</td>
-                        <td>30 boîtes</td>
-                        <td><span class="badge badge-warning">En attente</span></td>
-                    </tr>
-                    <tr>
-                        <td>5</td>
-                        <td>11/02/2026</td>
-                        <td>Toamasina</td>
-                        <td>Tentes</td>
-                        <td>15 unités</td>
-                        <td><span class="badge badge-info">En transit</span></td>
-                    </tr>
+                    <?php endforeach; ?>
                 </tbody>
             </table>
         </div>
     </div>
 </div>
+<?php endforeach; ?>
 
 <?php include __DIR__ . '/include/footer.php'; ?>
