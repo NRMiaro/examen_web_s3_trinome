@@ -7,9 +7,9 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/assets/bootstrap/css/bootstrap.min.css">
-    <link rel="stylesheet" href="/assets/bootstrap/bootstrap-icons/font/bootstrap-icons.css">
-    <link rel="stylesheet" href="/assets/css/dashboard.css">
+    <link rel="stylesheet" href="<?= BASE_URL ?>/assets/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="<?= BASE_URL ?>/assets/bootstrap/bootstrap-icons/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/dashboard.css">
 </head>
 <body>
 
@@ -23,17 +23,17 @@
 
         <nav class="sidebar-nav">
             <div class="nav-section-title">Principal</div>
-            <a href="/" class="nav-link <?= ($active_menu ?? '') === 'dashboard' ? 'active' : '' ?>">
+            <a href="<?= BASE_URL ?>/" class="nav-link <?= ($active_menu ?? '') === 'dashboard' ? 'active' : '' ?>">
                 <i class="bi bi-grid-1x2"></i>
                 <span class="nav-label">Tableau de bord</span>
             </a>
 
             <div class="nav-section-title">Gestion</div>
-            <a href="/besoins" class="nav-link <?= ($active_menu ?? '') === 'besoins' ? 'active' : '' ?>">
+            <a href="<?= BASE_URL ?>/besoins" class="nav-link <?= ($active_menu ?? '') === 'besoins' ? 'active' : '' ?>">
                 <i class="bi bi-clipboard-check"></i>
                 <span class="nav-label">Besoins</span>
             </a>
-            <a href="/dons" class="nav-link <?= ($active_menu ?? '') === 'dons' ? 'active' : '' ?>">
+            <a href="<?= BASE_URL ?>/dons" class="nav-link <?= ($active_menu ?? '') === 'dons' ? 'active' : '' ?>">
                 <i class="bi bi-gift-fill"></i>
                 <span class="nav-label">Dons</span>
             </a>

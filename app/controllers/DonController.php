@@ -2,127 +2,70 @@
 
 namespace app\controllers;
 
-use flight\Engine;
 use Flight;
+use flight\Engine;
+use app\models\DonModel;
 
 class DonController
 {
     protected Engine $app;
+    protected DonModel $model;
 
-    public function __construct(Engine $app)
+    public function __construct($app)
     {
         $this->app = $app;
+        $this->model = new DonModel(Flight::db());
     }
 
-    public function index(): void
+    public function index()
     {
-        // Récupérer tous les dons avec leurs détails
-        $stmt = Flight::db()->query("
-            SELECT d.id, d.date_don,
-                   GROUP_CONCAT(CONCAT(b.nom, ': ', dd.quantite, ' kg') SEPARATOR ', ') as details
-            FROM s3_don d
-            LEFT JOIN s3_don_details dd ON d.id = dd.id_don
-            LEFT JOIN s3_besoin b ON dd.id_besoin = b.id
-            GROUP BY d.id
-            ORDER BY d.date_don DESC
-        ");
-        $dons = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-
-        $this->app->render('dons/index', [
+        $dons = $this->model->getAllDons();
+        Flight::render('dons/index', [
             'page_title'  => 'Dons',
             'active_menu' => 'dons',
             'dons'        => $dons,
         ]);
     }
 
-    public function create(): void
+    public function create()
     {
-        // Récupérer les besoins disponibles
-        $stmt = Flight::db()->query("SELECT id, nom FROM s3_besoin ORDER BY nom");
-        $besoins = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-
-        $this->app->render('dons/form', [
+        $besoins = $this->model->getAllBesoins();
+        Flight::render('dons/form', [
             'page_title'  => 'Nouveau don',
             'active_menu' => 'dons',
-            'action'      => '/dons',
+            'action'      => BASE_URL . '/dons',
             'method'      => 'POST',
             'besoins'     => $besoins,
         ]);
     }
 
-    public function store(): void
+    public function store()
     {
         $request = Flight::request();
-        $date_don = $request->data->date_don;
-        $besoins = $request->data->besoins ?? [];
-        $quantites = $request->data->quantites ?? [];
-
-        try {
-            Flight::db()->beginTransaction();
-
-            // Insérer le don
-            $stmt = Flight::db()->prepare("
-                INSERT INTO s3_don (date_don)
-                VALUES (:date_don)
-            ");
-            $stmt->execute([':date_don' => $date_don]);
-            $id_don = Flight::db()->lastInsertId();
-
-            // Insérer les détails du don
-            $stmt = Flight::db()->prepare("
-                INSERT INTO s3_don_details (id_don, id_besoin, quantite)
-                VALUES (:id_don, :id_besoin, :quantite)
-            ");
-
-            foreach ($besoins as $index => $id_besoin) {
-                if (!empty($id_besoin) && !empty($quantites[$index])) {
-                    $stmt->execute([
-                        ':id_don' => $id_don,
-                        ':id_besoin' => $id_besoin,
-                        ':quantite' => $quantites[$index],
-                    ]);
-                }
-            }
-
-            Flight::db()->commit();
-        } catch (\Exception $e) {
-            Flight::db()->rollBack();
-            throw $e;
+        
+        if ($request->method === 'POST') {
+            $data = $request->data->getData();
+            $this->model->insertDon($data);
+            Flight::redirect('/dons');
         }
-
-        $this->app->redirect('/dons');
     }
 
-    public function edit(string $id): void
+    public function edit($id)
     {
-        // Récupérer le don
-        $stmt = Flight::db()->prepare("SELECT * FROM s3_don WHERE id = :id");
-        $stmt->execute([':id' => $id]);
-        $don = $stmt->fetch(\PDO::FETCH_ASSOC);
-
+        $don = $this->model->getDonById($id);
+        
         if (!$don) {
-            $this->app->redirect('/dons');
+            Flight::redirect('/dons');
             return;
         }
 
-        // Récupérer les détails du don
-        $stmt = Flight::db()->prepare("
-            SELECT dd.*, b.nom as besoin_nom
-            FROM s3_don_details dd
-            JOIN s3_besoin b ON dd.id_besoin = b.id
-            WHERE dd.id_don = :id_don
-        ");
-        $stmt->execute([':id_don' => $id]);
-        $details = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-
-        // Récupérer tous les besoins
-        $stmt = Flight::db()->query("SELECT id, nom FROM s3_besoin ORDER BY nom");
-        $besoins = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-
-        $this->app->render('dons/form', [
+        $details = $this->model->getDonDetails($id);
+        $besoins = $this->model->getAllBesoins();
+        
+        Flight::render('dons/form', [
             'page_title'  => 'Modifier don',
             'active_menu' => 'dons',
-            'action'      => '/dons/' . $id,
+            'action'      => BASE_URL . '/dons/' . $id,
             'method'      => 'PUT',
             'don'         => $don,
             'details'     => $details,
@@ -130,75 +73,17 @@ class DonController
         ]);
     }
 
-    public function update(string $id): void
+    public function update($id)
     {
         $request = Flight::request();
-        $date_don = $request->data->date_don;
-        $besoins = $request->data->besoins ?? [];
-        $quantites = $request->data->quantites ?? [];
-
-        try {
-            Flight::db()->beginTransaction();
-
-            // Mettre à jour le don
-            $stmt = Flight::db()->prepare("
-                UPDATE s3_don
-                SET date_don = :date_don
-                WHERE id = :id
-            ");
-            $stmt->execute([
-                ':date_don' => $date_don,
-                ':id' => $id,
-            ]);
-
-            // Supprimer les anciens détails
-            $stmt = Flight::db()->prepare("DELETE FROM s3_don_details WHERE id_don = :id_don");
-            $stmt->execute([':id_don' => $id]);
-
-            // Insérer les nouveaux détails
-            $stmt = Flight::db()->prepare("
-                INSERT INTO s3_don_details (id_don, id_besoin, quantite)
-                VALUES (:id_don, :id_besoin, :quantite)
-            ");
-
-            foreach ($besoins as $index => $id_besoin) {
-                if (!empty($id_besoin) && !empty($quantites[$index])) {
-                    $stmt->execute([
-                        ':id_don' => $id,
-                        ':id_besoin' => $id_besoin,
-                        ':quantite' => $quantites[$index],
-                    ]);
-                }
-            }
-
-            Flight::db()->commit();
-        } catch (\Exception $e) {
-            Flight::db()->rollBack();
-            throw $e;
-        }
-
-        $this->app->redirect('/dons');
+        $data = $request->data->getData();
+        $this->model->updateDon($id, $data);
+        Flight::redirect('/dons');
     }
 
-    public function delete(string $id): void
+    public function delete($id)
     {
-        try {
-            Flight::db()->beginTransaction();
-
-            // Supprimer les détails du don
-            $stmt = Flight::db()->prepare("DELETE FROM s3_don_details WHERE id_don = :id_don");
-            $stmt->execute([':id_don' => $id]);
-
-            // Supprimer le don
-            $stmt = Flight::db()->prepare("DELETE FROM s3_don WHERE id = :id");
-            $stmt->execute([':id' => $id]);
-
-            Flight::db()->commit();
-        } catch (\Exception $e) {
-            Flight::db()->rollBack();
-            throw $e;
-        }
-
-        $this->app->redirect('/dons');
+        $this->model->deleteDon($id);
+        Flight::redirect('/dons');
     }
 }

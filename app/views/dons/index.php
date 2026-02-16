@@ -9,7 +9,7 @@
         </div>
     </div>
     <div class="page-header-actions">
-        <a href="/dons/nouveau" class="btn btn-success">
+        <a href="<?= BASE_URL ?>/dons/nouveau" class="btn btn-success">
             <i class="bi bi-plus-lg"></i> Nouveau don
         </a>
     </div>
@@ -50,8 +50,8 @@
                         <td><?= htmlspecialchars($don['details'] ?? 'Aucun détail') ?></td>
                         <td>
                             <div class="actions">
-                                <a href="/dons/<?= $don['id'] ?>/modifier" class="btn btn-icon btn-outline btn-sm" title="Modifier"><i class="bi bi-pencil"></i></a>
-                                <form method="POST" action="/dons/<?= $don['id'] ?>/supprimer" style="display: inline;" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce don ?');">
+                                <a href="<?= BASE_URL ?>/dons/<?= $don['id'] ?>/modifier" class="btn btn-icon btn-outline btn-sm" title="Modifier"><i class="bi bi-pencil"></i></a>
+                                <form method="POST" action="<?= BASE_URL ?>/dons/<?= $don['id'] ?>/supprimer" style="display: inline;" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce don ?');">
                                     <button type="submit" class="btn btn-icon btn-outline btn-sm" title="Supprimer"><i class="bi bi-trash"></i></button>
                                 </form>
                             </div>

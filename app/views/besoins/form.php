@@ -37,7 +37,7 @@
                 </div>
 
                 <div class="form-actions">
-                    <a href="/besoins" class="btn btn-outline">Annuler</a>
+                    <a href="<?= BASE_URL ?>/besoins" class="btn btn-outline">Annuler</a>
                     <button type="submit" class="btn btn-primary">Enregistrer</button>
                 </div>
             </form>

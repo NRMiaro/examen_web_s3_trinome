@@ -9,7 +9,7 @@
         </div>
     </div>
     <div class="page-header-actions">
-        <a href="/besoins/nouveau" class="btn btn-primary">
+        <a href="<?= BASE_URL ?>/besoins/nouveau" class="btn btn-primary">
             <i class="bi bi-plus-lg"></i> Nouveau besoin
         </a>
     </div>
@@ -52,8 +52,8 @@
                         <td><?= number_format($besoin['prix'], 0, ',', ' ') ?> Ar</td>
                         <td>
                             <div class="actions">
-                                <a href="/besoins/<?= $besoin['id'] ?>/modifier" class="btn btn-icon btn-outline btn-sm" title="Modifier"><i class="bi bi-pencil"></i></a>
-                                <form method="POST" action="/besoins/<?= $besoin['id'] ?>/supprimer" style="display: inline;" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce besoin ?');">
+                                <a href="<?= BASE_URL ?>/besoins/<?= $besoin['id'] ?>/modifier" class="btn btn-icon btn-outline btn-sm" title="Modifier"><i class="bi bi-pencil"></i></a>
+                                <form method="POST" action="<?= BASE_URL ?>/besoins/<?= $besoin['id'] ?>/supprimer" style="display: inline;" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce besoin ?');">
                                     <button type="submit" class="btn btn-icon btn-outline btn-sm" title="Supprimer"><i class="bi bi-trash"></i></button>
                                 </form>
                             </div>

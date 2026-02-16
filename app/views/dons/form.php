@@ -66,7 +66,7 @@
                 </button>
 
                 <div class="form-actions">
-                    <a href="/dons" class="btn btn-outline">Annuler</a>
+                    <a href="<?= BASE_URL ?>/dons" class="btn btn-outline">Annuler</a>
                     <button type="submit" class="btn btn-success">Enregistrer</button>
                 </div>
             </form>

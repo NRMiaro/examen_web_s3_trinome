@@ -2,20 +2,20 @@
 
 namespace app\controllers;
 
-use flight\Engine;
+use Flight;
 
 class DashboardController
 {
-    protected Engine $app;
+    protected $app;
 
-    public function __construct(Engine $app)
+    public function __construct($app)
     {
         $this->app = $app;
     }
 
-    public function index(): void
+    public function index()
     {
-        $this->app->render('dashboard', [
+        Flight::render('dashboard', [
             'page_title'  => 'Tableau de bord',
             'active_menu' => 'dashboard',
         ]);

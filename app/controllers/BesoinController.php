@@ -2,125 +2,85 @@
 
 namespace app\controllers;
 
-use flight\Engine;
 use Flight;
+use flight\Engine;
+use app\models\BesoinModel;
 
 class BesoinController
 {
     protected Engine $app;
+    protected BesoinModel $model;
 
-    public function __construct(Engine $app)
+    public function __construct($app)
     {
         $this->app = $app;
+        $this->model = new BesoinModel(Flight::db());
     }
 
-    public function index(): void
+    public function index()
     {
-        // Récupérer tous les besoins avec leur type
-        $stmt = Flight::db()->prepare("
-            SELECT b.id, b.nom, b.prix, t.nom as type_nom
-            FROM s3_besoin b
-            JOIN s3_type_besoin t ON b.id_type_besoin = t.id
-            ORDER BY b.id DESC
-        ");
-        $stmt->execute();
-        $besoins = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-
-        $this->app->render('besoins/index', [
+        $besoins = $this->model->getAllBesoins();
+        Flight::render('besoins/index', [
             'page_title'  => 'Besoins',
             'active_menu' => 'besoins',
             'besoins'     => $besoins,
         ]);
     }
 
-    public function create(): void
+    public function create()
     {
-        // Récupérer les types de besoins
-        $stmt = Flight::db()->query("SELECT id, nom FROM s3_type_besoin ORDER BY nom");
-        $types = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-
-        $this->app->render('besoins/form', [
+        $types = $this->model->getAllTypes();
+        Flight::render('besoins/form', [
             'page_title'  => 'Nouveau besoin',
             'active_menu' => 'besoins',
-            'action'      => '/besoins',
+            'action'      => BASE_URL . '/besoins',
             'method'      => 'POST',
             'types'       => $types,
         ]);
     }
 
-    public function store(): void
+    public function store()
     {
         $request = Flight::request();
-        $nom = $request->data->nom;
-        $id_type_besoin = $request->data->id_type_besoin;
-        $prix = $request->data->prix;
-
-        $stmt = Flight::db()->prepare("
-            INSERT INTO s3_besoin (nom, id_type_besoin, prix)
-            VALUES (:nom, :id_type_besoin, :prix)
-        ");
-        $stmt->execute([
-            ':nom' => $nom,
-            ':id_type_besoin' => $id_type_besoin,
-            ':prix' => $prix,
-        ]);
-
-        $this->app->redirect('/besoins');
+        
+        if ($request->method === 'POST') {
+            $data = $request->data->getData();
+            $this->model->insertBesoin($data);
+            Flight::redirect('/besoins');
+        }
     }
 
-    public function edit(string $id): void
+    public function edit($id)
     {
-        // Récupérer le besoin
-        $stmt = Flight::db()->prepare("SELECT * FROM s3_besoin WHERE id = :id");
-        $stmt->execute([':id' => $id]);
-        $besoin = $stmt->fetch(\PDO::FETCH_ASSOC);
-
+        $besoin = $this->model->getBesoinById($id);
+        
         if (!$besoin) {
-            $this->app->redirect('/besoins');
+            Flight::redirect('/besoins');
             return;
         }
 
-        // Récupérer les types de besoins
-        $stmt = Flight::db()->query("SELECT id, nom FROM s3_type_besoin ORDER BY nom");
-        $types = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-
-        $this->app->render('besoins/form', [
+        $types = $this->model->getAllTypes();
+        Flight::render('besoins/form', [
             'page_title'  => 'Modifier besoin',
             'active_menu' => 'besoins',
-            'action'      => '/besoins/' . $id,
+            'action'      => BASE_URL . '/besoins/' . $id,
             'method'      => 'PUT',
             'besoin'      => $besoin,
             'types'       => $types,
         ]);
     }
 
-    public function update(string $id): void
+    public function update($id)
     {
         $request = Flight::request();
-        $nom = $request->data->nom;
-        $id_type_besoin = $request->data->id_type_besoin;
-        $prix = $request->data->prix;
-
-        $stmt = Flight::db()->prepare("
-            UPDATE s3_besoin
-            SET nom = :nom, id_type_besoin = :id_type_besoin, prix = :prix
-            WHERE id = :id
-        ");
-        $stmt->execute([
-            ':nom' => $nom,
-            ':id_type_besoin' => $id_type_besoin,
-            ':prix' => $prix,
-            ':id' => $id,
-        ]);
-
-        $this->app->redirect('/besoins');
+        $data = $request->data->getData();
+        $this->model->updateBesoin($id, $data);
+        Flight::redirect('/besoins');
     }
 
-    public function delete(string $id): void
+    public function delete($id)
     {
-        $stmt = Flight::db()->prepare("DELETE FROM s3_besoin WHERE id = :id");
-        $stmt->execute([':id' => $id]);
-
-        $this->app->redirect('/besoins');
+        $this->model->deleteBesoin($id);
+        Flight::redirect('/besoins');
     }
 }
