@@ -25,6 +25,23 @@ class DonModel
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
 
+    public function searchDons($search)
+    {
+        $searchTerm = '%' . $search . '%';
+        $stmt = $this->db->prepare("
+            SELECT d.id, d.date_don,
+                   GROUP_CONCAT(CONCAT(b.nom, ': ', dd.quantite, ' kg') SEPARATOR ', ') as details
+            FROM s3_don d
+            LEFT JOIN s3_don_details dd ON d.id = dd.id_don
+            LEFT JOIN s3_besoin b ON dd.id_besoin = b.id
+            WHERE d.date_don LIKE :search OR b.nom LIKE :search
+            GROUP BY d.id
+            ORDER BY d.date_don DESC
+        ");
+        $stmt->execute([':search' => $searchTerm]);
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+    }
+
     public function getDonById($id)
     {
         $stmt = $this->db->prepare("SELECT * FROM s3_don WHERE id = :id");

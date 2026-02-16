@@ -19,10 +19,18 @@ class BesoinController
 
     public function index()
     {
-        $besoins = $this->model->getAllBesoins();
+        $search = Flight::request()->query->search ?? '';
+        
+        if (!empty($search)) {
+            $besoins = $this->model->searchBesoins($search);
+        } else {
+            $besoins = $this->model->getAllBesoins();
+        }
+        
         Flight::render('besoins/index', [
             'page_title'  => 'Besoins',
             'besoins'     => $besoins,
+            'search'      => $search,
         ]);
     }
 

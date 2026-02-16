@@ -20,14 +20,18 @@
 
 <div class="card">
     <div class="card-body">
-        <div class="table-toolbar">
-            <div class="table-search">
+    <div class="table-toolbar">
+        <form method="GET" action="<?= BASE_URL ?>/besoins" class="table-search-form" style="display: flex; gap: 10px; align-items: center;">
+            <div class="table-search" style="flex: 1;">
                 <i class="bi bi-search"></i>
-                <input type="text" placeholder="Rechercher un besoin…">
+                <input type="text" name="search" placeholder="Rechercher un besoin…" value="<?= htmlspecialchars($search ?? '') ?>">
             </div>
-        </div>
-
-        <div class="table-wrapper">
+            <button type="submit" class="btn btn-sm btn-outline">Chercher</button>
+            <?php if (!empty($search)): ?>
+            <a href="<?= BASE_URL ?>/besoins" class="btn btn-sm btn-outline">Réinitialiser</a>
+            <?php endif; ?>
+        </form>
+    </div>        <div class="table-wrapper">
             <table class="data-table">
                 <thead>
                     <tr>
