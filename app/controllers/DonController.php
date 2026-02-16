@@ -43,7 +43,7 @@ class DonController
         if ($request->method === 'POST') {
             $data = $request->data->getData();
             $this->model->insertDon($data);
-            Flight::redirect('/dons');
+            Flight::redirect('dons');
         }
     }
 
@@ -52,7 +52,7 @@ class DonController
         $don = $this->model->getDonById($id);
         
         if (!$don) {
-            Flight::redirect('/dons');
+            Flight::redirect('dons');
             return;
         }
 
@@ -73,12 +73,12 @@ class DonController
         $request = Flight::request();
         $data = $request->data->getData();
         $this->model->updateDon($id, $data);
-        Flight::redirect('/dons');
+        Flight::redirect('dons');
     }
 
     public function delete($id)
     {
         $this->model->deleteDon($id);
-        Flight::redirect('/dons');
+        Flight::redirect('dons');
     }
 }
