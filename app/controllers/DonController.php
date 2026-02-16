@@ -22,7 +22,6 @@ class DonController
         $dons = $this->model->getAllDons();
         Flight::render('dons/index', [
             'page_title'  => 'Dons',
-            'active_menu' => 'dons',
             'dons'        => $dons,
         ]);
     }
@@ -32,9 +31,7 @@ class DonController
         $besoins = $this->model->getAllBesoins();
         Flight::render('dons/form', [
             'page_title'  => 'Nouveau don',
-            'active_menu' => 'dons',
             'action'      => BASE_URL . '/dons',
-            'method'      => 'POST',
             'besoins'     => $besoins,
         ]);
     }
@@ -64,9 +61,7 @@ class DonController
         
         Flight::render('dons/form', [
             'page_title'  => 'Modifier don',
-            'active_menu' => 'dons',
             'action'      => BASE_URL . '/dons/' . $id,
-            'method'      => 'PUT',
             'don'         => $don,
             'details'     => $details,
             'besoins'     => $besoins,

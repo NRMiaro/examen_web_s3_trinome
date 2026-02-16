@@ -17,7 +17,6 @@ class DashboardController
     {
         Flight::render('dashboard', [
             'page_title'  => 'Tableau de bord',
-            'active_menu' => 'dashboard',
         ]);
     }
 }

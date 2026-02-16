@@ -22,7 +22,6 @@ class BesoinController
         $besoins = $this->model->getAllBesoins();
         Flight::render('besoins/index', [
             'page_title'  => 'Besoins',
-            'active_menu' => 'besoins',
             'besoins'     => $besoins,
         ]);
     }
@@ -32,9 +31,7 @@ class BesoinController
         $types = $this->model->getAllTypes();
         Flight::render('besoins/form', [
             'page_title'  => 'Nouveau besoin',
-            'active_menu' => 'besoins',
             'action'      => BASE_URL . '/besoins',
-            'method'      => 'POST',
             'types'       => $types,
         ]);
     }
@@ -62,9 +59,7 @@ class BesoinController
         $types = $this->model->getAllTypes();
         Flight::render('besoins/form', [
             'page_title'  => 'Modifier besoin',
-            'active_menu' => 'besoins',
             'action'      => BASE_URL . '/besoins/' . $id,
-            'method'      => 'PUT',
             'besoin'      => $besoin,
             'types'       => $types,
         ]);
