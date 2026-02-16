@@ -1,101 +1,385 @@
 -- Décommenter ça si en local
 
-DROP DATABASE IF EXISTS trinome_bngrc;
-CREATE DATABASE trinome_bngrc;
+DROP DATABASE IF EXISTS s3_bngrc;
+CREATE DATABASE s3_bngrc;
 
 -- 
 
-CREATE TABLE trinome_ville (
+CREATE TABLE s3_ville (
     id INT AUTO_INCREMENT PRIMARY KEY,
     nom VARCHAR(50)
 );
 
-INSERT INTO trinome_ville (nom) 
+INSERT INTO s3_ville (nom) 
 VALUES 
     ('Antananarivo'),
     ('Mahajanga');
 
-CREATE TABLE trinome_type_besoin (
+CREATE TABLE s3_type_besoin (
     id INT AUTO_INCREMENT PRIMARY KEY,
     nom VARCHAR(50)
 );
 
-INSERT INTO trinome_type_besoin (nom) 
+INSERT INTO s3_type_besoin (nom) 
 VALUES 
     ('nature'),
     ('matériel'),
     ('argent');
 
-CREATE TABLE trinome_besoin (
+CREATE TABLE s3_besoin (
     id INT AUTO_INCREMENT PRIMARY KEY,
     id_type_besoin INT NOT NULL,
     nom VARCHAR(50) NOT NULL,
     prix INT NOT NULL,
-    FOREIGN KEY (id_type_besoin) REFERENCES trinome_type_besoin(id)
+    FOREIGN KEY (id_type_besoin) REFERENCES s3_type_besoin(id)
 );
 
-CREATE TABLE trinome_besoin_ville (
+INSERT INTO s3_besoin (id_type_besoin, nom, prix) 
+VALUES 
+    (1, 'Riz', 1000),
+    (1, 'Huile', 4000),
+    ;
+
+
+-- Une ville fait une demande (on stocke les détails dans s3_besoin_ville_details)
+CREATE TABLE s3_besoin_ville (
     id INT AUTO_INCREMENT PRIMARY KEY,
     id_ville INT NOT NULL,
+    date_besoin datetime,
+    FOREIGN KEY (id_ville) REFERENCES s3_ville(id),
+    FOREIGN KEY (id_besoin) REFERENCES s3_besoin(id)
+);
+
+INSERT INTO s3_besoin_ville 
+    (id_ville, date_besoin)
+VALUES 
+    (1, '2026-02-16 10:00:00'),
+    (2, '2026-02-16 12:00:00'),
+
+-- Détails d'une demande de besoins
+CREATE TABLE s3_besoin_ville_details (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    id_besoin_ville INT NOT NULL,
     id_besoin INT NOT NULL,
     quantite INT NOT NULL,
-    FOREIGN KEY (id_ville) REFERENCES trinome_ville(id),
-    FOREIGN KEY (id_besoin) REFERENCES trinome_besoin(id)
 );
 
-CREATE TABLE trinome_etat_besoin (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    description VARCHAR(50) NOT NULL
-);
-
-INSERT INTO trinome_etat_besoin (description) 
+INSERT INTO s3_besoin_ville_details 
+    (id_besoin_ville, id_besoin, quantite)
 VALUES 
-    ('En attente'),
-    ('Délivré');
+    (1, 1, 1000), -- tana demande 1000kg de riz
+    (1, 2, 500),  -- tana demande 500L de huile
+    (2, 1, 2000), -- mahajanga demande 2000kg de riz
+    (2, 2, 1000),  -- mahajanga demande 1000L de huile
 
-CREATE TABLE trinome_don (
+
+CREATE TABLE s3_don (
+    id int AUTO_INCREMENT PRIMARY KEY,
+    date_don datetime
+);
+
+INSERT INTO s3_don 
+    (date_don)
+VALUES 
+    ('2026-02-16 14:00:00');
+
+create table s3_don_details (
+    id int AUTO_INCREMENT PRIMARY KEY,
+    id_don int NOT NULL,
+    id_besoin int not null,
+    quantite int not null
+);
+
+insert into s3_don_details 
+    (id_don, id_besoin, quantite)
+VALUES 
+    (1, 1, 2500),
+    (1, 2, 1200);-- Décommenter ça si en local
+
+DROP DATABASE IF EXISTS s3_bngrc;
+CREATE DATABASE s3_bngrc;
+
+-- 
+
+CREATE TABLE s3_ville (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nom VARCHAR(50)
+);
+
+INSERT INTO s3_ville (nom) 
+VALUES 
+    ('Antananarivo'),
+    ('Mahajanga');
+
+CREATE TABLE s3_type_besoin (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nom VARCHAR(50)
+);
+
+INSERT INTO s3_type_besoin (nom) 
+VALUES 
+    ('nature'),
+    ('matériel'),
+    ('argent');
+
+CREATE TABLE s3_besoin (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    id_type_besoin INT NOT NULL,
+    nom VARCHAR(50) NOT NULL,
+    prix INT NOT NULL,
+    FOREIGN KEY (id_type_besoin) REFERENCES s3_type_besoin(id)
+);
+
+INSERT INTO s3_besoin (id_type_besoin, nom, prix) 
+VALUES 
+    (1, 'Riz', 1000),
+    (1, 'Huile', 4000),
+    ;
+
+
+-- Une ville fait une demande (on stocke les détails dans s3_besoin_ville_details)
+CREATE TABLE s3_besoin_ville (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    id_ville INT NOT NULL,
+    date_besoin datetime,
+    FOREIGN KEY (id_ville) REFERENCES s3_ville(id),
+    FOREIGN KEY (id_besoin) REFERENCES s3_besoin(id)
+);
+
+INSERT INTO s3_besoin_ville 
+    (id_ville, date_besoin)
+VALUES 
+    (1, '2026-02-16 10:00:00'),
+    (2, '2026-02-16 12:00:00'),
+
+-- Détails d'une demande de besoins
+CREATE TABLE s3_besoin_ville_details (
     id INT AUTO_INCREMENT PRIMARY KEY,
     id_besoin_ville INT NOT NULL,
-    FOREIGN KEY (id_besoin_ville) REFERENCES trinome_besoin_ville(id)
+    id_besoin INT NOT NULL,
+    quantite INT NOT NULL,
 );
 
-CREATE TABLE trinome_historique_etat_besoin_ville (
+INSERT INTO s3_besoin_ville_details 
+    (id_besoin_ville, id_besoin, quantite)
+VALUES 
+    (1, 1, 1000), -- tana demande 1000kg de riz
+    (1, 2, 500),  -- tana demande 500L de huile
+    (2, 1, 2000), -- mahajanga demande 2000kg de riz
+    (2, 2, 1000),  -- mahajanga demande 1000L de huile
+
+
+CREATE TABLE s3_don (
+    id int AUTO_INCREMENT PRIMARY KEY,
+    date_don datetime
+);
+
+INSERT INTO s3_don 
+    (date_don)
+VALUES 
+    ('2026-02-16 14:00:00');
+
+create table s3_don_details (
+    id int AUTO_INCREMENT PRIMARY KEY,
+    id_don int NOT NULL,
+    id_besoin int not null,
+    quantite int not null
+);
+
+insert into s3_don_details 
+    (id_don, id_besoin, quantite)
+VALUES 
+    (1, 1, 2500),
+    (1, 2, 1200);-- Décommenter ça si en local
+
+DROP DATABASE IF EXISTS s3_bngrc;
+CREATE DATABASE s3_bngrc;
+
+-- 
+
+CREATE TABLE s3_ville (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nom VARCHAR(50)
+);
+
+INSERT INTO s3_ville (nom) 
+VALUES 
+    ('Antananarivo'),
+    ('Mahajanga');
+
+CREATE TABLE s3_type_besoin (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nom VARCHAR(50)
+);
+
+INSERT INTO s3_type_besoin (nom) 
+VALUES 
+    ('nature'),
+    ('matériel'),
+    ('argent');
+
+CREATE TABLE s3_besoin (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    id_type_besoin INT NOT NULL,
+    nom VARCHAR(50) NOT NULL,
+    prix INT NOT NULL,
+    FOREIGN KEY (id_type_besoin) REFERENCES s3_type_besoin(id)
+);
+
+INSERT INTO s3_besoin (id_type_besoin, nom, prix) 
+VALUES 
+    (1, 'Riz', 1000),
+    (1, 'Huile', 4000),
+    ;
+
+
+-- Une ville fait une demande (on stocke les détails dans s3_besoin_ville_details)
+CREATE TABLE s3_besoin_ville (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    id_ville INT NOT NULL,
+    date_besoin datetime,
+    FOREIGN KEY (id_ville) REFERENCES s3_ville(id),
+    FOREIGN KEY (id_besoin) REFERENCES s3_besoin(id)
+);
+
+INSERT INTO s3_besoin_ville 
+    (id_ville, date_besoin)
+VALUES 
+    (1, '2026-02-16 10:00:00'),
+    (2, '2026-02-16 12:00:00'),
+
+-- Détails d'une demande de besoins
+CREATE TABLE s3_besoin_ville_details (
     id INT AUTO_INCREMENT PRIMARY KEY,
     id_besoin_ville INT NOT NULL,
-    date_ DATETIME NOT NULL,
-    id_etat_besoin INT NOT NULL,
-    FOREIGN KEY (id_besoin_ville) REFERENCES trinome_besoin_ville(id),
-    FOREIGN KEY (id_etat_besoin) REFERENCES trinome_etat_besoin(id)
+    id_besoin INT NOT NULL,
+    quantite INT NOT NULL,
 );
 
--- Données de test minimales
--- Insertion de besoins supplémentaires
-INSERT INTO trinome_besoin (id_type_besoin, nom, prix) 
+INSERT INTO s3_besoin_ville_details 
+    (id_besoin_ville, id_besoin, quantite)
 VALUES 
-    (1, 'Eau', 1000),
-    (2, 'Couvertures', 5000),
-    (1, 'Nourriture', 15000);
+    (1, 1, 1000), -- tana demande 1000kg de riz
+    (1, 2, 500),  -- tana demande 500L de huile
+    (2, 1, 2000), -- mahajanga demande 2000kg de riz
+    (2, 2, 1000),  -- mahajanga demande 1000L de huile
 
--- Insertion des besoins par ville
-INSERT INTO trinome_besoin_ville (id_ville, id_besoin, quantite) 
-VALUES 
-    (1, 1, 100),  -- 100 litres d'eau à Antananarivo
-    (1, 2, 50),   -- 50 couvertures à Antananarivo
-    (2, 1, 150),  -- 150 litres d'eau à Mahajanga
-    (2, 3, 200);  -- 200 portions de nourriture à Mahajanga
 
--- Insertion des dons
-INSERT INTO trinome_don (id_besoin_ville) 
-VALUES 
-    (1),
-    (3);
+CREATE TABLE s3_don (
+    id int AUTO_INCREMENT PRIMARY KEY,
+    date_don datetime
+);
 
--- Insertion de l'historique des états
-INSERT INTO trinome_historique_etat_besoin_ville (id_besoin_ville, date_, id_etat_besoin) 
+INSERT INTO s3_don 
+    (date_don)
 VALUES 
-    (1, NOW(), 1),           -- Besoin 1 délivré (dans trinome_don)
-    (1, NOW(), 2),           -- Besoin 1 délivré (dans trinome_don)
-    (2, NOW(), 1),           -- Besoin 2 en attente
-    (3, NOW(), 1),           -- Besoin 3 délivré (dans trinome_don)
-    (3, NOW(), 2),           -- Besoin 3 délivré (dans trinome_don)
-    (4, NOW(), 1);           -- Besoin 4 en attente
+    ('2026-02-16 14:00:00');
+
+create table s3_don_details (
+    id int AUTO_INCREMENT PRIMARY KEY,
+    id_don int NOT NULL,
+    id_besoin int not null,
+    quantite int not null
+);
+
+insert into s3_don_details 
+    (id_don, id_besoin, quantite)
+VALUES 
+    (1, 1, 2500),
+    (1, 2, 1200);-- Décommenter ça si en local
+
+DROP DATABASE IF EXISTS s3_bngrc;
+CREATE DATABASE s3_bngrc;
+
+-- 
+
+CREATE TABLE s3_ville (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nom VARCHAR(50)
+);
+
+INSERT INTO s3_ville (nom) 
+VALUES 
+    ('Antananarivo'),
+    ('Mahajanga');
+
+CREATE TABLE s3_type_besoin (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nom VARCHAR(50)
+);
+
+INSERT INTO s3_type_besoin (nom) 
+VALUES 
+    ('nature'),
+    ('matériel'),
+    ('argent');
+
+CREATE TABLE s3_besoin (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    id_type_besoin INT NOT NULL,
+    nom VARCHAR(50) NOT NULL,
+    prix INT NOT NULL,
+    FOREIGN KEY (id_type_besoin) REFERENCES s3_type_besoin(id)
+);
+
+INSERT INTO s3_besoin (id_type_besoin, nom, prix) 
+VALUES 
+    (1, 'Riz', 1000),
+    (1, 'Huile', 4000),
+    ;
+
+
+-- Une ville fait une demande (on stocke les détails dans s3_besoin_ville_details)
+CREATE TABLE s3_besoin_ville (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    id_ville INT NOT NULL,
+    date_besoin datetime,
+    FOREIGN KEY (id_ville) REFERENCES s3_ville(id),
+    FOREIGN KEY (id_besoin) REFERENCES s3_besoin(id)
+);
+
+INSERT INTO s3_besoin_ville 
+    (id_ville, date_besoin)
+VALUES 
+    (1, '2026-02-16 10:00:00'),
+    (2, '2026-02-16 12:00:00'),
+
+-- Détails d'une demande de besoins
+CREATE TABLE s3_besoin_ville_details (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    id_besoin_ville INT NOT NULL,
+    id_besoin INT NOT NULL,
+    quantite INT NOT NULL,
+);
+
+INSERT INTO s3_besoin_ville_details 
+    (id_besoin_ville, id_besoin, quantite)
+VALUES 
+    (1, 1, 1000), -- tana demande 1000kg de riz
+    (1, 2, 500),  -- tana demande 500L de huile
+    (2, 1, 2000), -- mahajanga demande 2000kg de riz
+    (2, 2, 1000),  -- mahajanga demande 1000L de huile
+
+
+CREATE TABLE s3_don (
+    id int AUTO_INCREMENT PRIMARY KEY,
+    date_don datetime
+);
+
+INSERT INTO s3_don 
+    (date_don)
+VALUES 
+    ('2026-02-16 14:00:00');
+
+create table s3_don_details (
+    id int AUTO_INCREMENT PRIMARY KEY,
+    id_don int NOT NULL,
+    id_besoin int not null,
+    quantite int not null
+);
+
+insert into s3_don_details 
+    (id_don, id_besoin, quantite)
+VALUES 
+    (1, 1, 2500), 
+    (1, 2, 1200);
