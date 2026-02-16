@@ -28,11 +28,14 @@ class BesoinController
 
     public function create()
     {
+        $villes = $this->model->getAllVilles();
         $types = $this->model->getAllTypes();
         Flight::render('besoins/form', [
             'page_title'  => 'Nouveau besoin',
             'action'      => BASE_URL . '/besoins',
+            'villes'      => $villes,
             'types'       => $types,
+            'date_besoin' => date('Y-m-d\TH:i'),
         ]);
     }
 
@@ -41,8 +44,42 @@ class BesoinController
         $request = Flight::request();
         
         if ($request->method === 'POST') {
-            $data = $request->data->getData();
-            $this->model->insertBesoin($data);
+            $idVille = $request->data->id_ville;
+            $dateBesoin = $request->data->date_besoin;
+            $nomBesoins = $request->data->{'nom_besoin'} ?? [];
+            $typeBesoins = $request->data->{'id_type_besoin'} ?? [];
+            $prixBesoins = $request->data->{'prix_besoin'} ?? [];
+            $quantites = $request->data->quantite ?? [];
+
+            if (!$idVille || !$dateBesoin || empty($nomBesoins)) {
+                Flight::redirect('/besoins/nouveau');
+                return;
+            }
+
+            // Créer les besoins et ajouter à la ville
+            $besoins = [];
+            foreach ($nomBesoins as $index => $nom) {
+                if (!empty($nom) && isset($typeBesoins[$index]) && isset($prixBesoins[$index]) && isset($quantites[$index])) {
+                    // Créer ou récupérer le besoin
+                    $idBesoin = $this->model->getOrCreateBesoin(
+                        $nom,
+                        $typeBesoins[$index],
+                        $prixBesoins[$index]
+                    );
+
+                    if ($quantites[$index] > 0) {
+                        $besoins[] = [
+                            'id_besoin' => $idBesoin,
+                            'quantite' => $quantites[$index]
+                        ];
+                    }
+                }
+            }
+
+            if (!empty($besoins)) {
+                $this->model->createBesoinVille($idVille, $dateBesoin, $besoins);
+            }
+
             Flight::redirect('/besoins');
         }
     }
