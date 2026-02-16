@@ -3,6 +3,9 @@
 use app\controllers\DashboardController;
 use app\controllers\BesoinController;
 use app\controllers\DonController;
+use app\controllers\CaisseController;
+use app\controllers\AchatController;
+use app\models\DonModel;
 use app\middlewares\SecurityHeadersMiddleware;
 use flight\net\Router;
 use flight\Engine;
@@ -69,19 +72,45 @@ $router->group('', function (Router $router) use ($app) {
             $controller = new DonController($app);
             $controller->store();
         });
+    });
 
-        $router->get('/@id/modifier', function ($id) use ($app) {
-            $controller = new DonController($app);
-            $controller->edit($id);
+    // API Routes
+    $router->group('/api', function () use ($router, $app) {
+        $router->get('/besoins-by-type', function () use ($app) {
+            $type = Flight::request()->query->type ?? '';
+            $model = new DonModel(Flight::db());
+            $besoins = !empty($type) ? $model->getBesoinsByType($type) : [];
+            Flight::json(['data' => $besoins]);
+        });
+    });
+
+    // CRUD Caisse
+    $router->group('/caisse', function () use ($router, $app) {
+        $router->get('', function () use ($app) {
+            $controller = new CaisseController($app);
+            $controller->index();
+        });
+    });
+
+    // CRUD Achats
+    $router->group('/achats', function () use ($router, $app) {
+        $router->get('', function () use ($app) {
+            $controller = new AchatController($app);
+            $controller->index();
         });
 
-        $router->post('/@id', function ($id) use ($app) {
-            $controller = new DonController($app);
-            $controller->update($id);
+        $router->get('/nouveau', function () use ($app) {
+            $controller = new AchatController($app);
+            $controller->create();
+        });
+
+        $router->post('', function () use ($app) {
+            $controller = new AchatController($app);
+            $controller->store();
         });
 
         $router->post('/@id/supprimer', function ($id) use ($app) {
-            $controller = new DonController($app);
+            $controller = new AchatController($app);
             $controller->delete($id);
         });
     });

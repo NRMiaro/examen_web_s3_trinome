@@ -10,7 +10,7 @@
     </div>
     <div class="page-header-actions">
         <a href="<?= BASE_URL ?>/dons/nouveau" class="btn btn-success">
-            <i class="bi bi-plus-lg"></i> Nouveau don
+            <i class="bi bi-plus-lg"></i> Ajouter dons
         </a>
     </div>
 </div>
@@ -40,8 +40,8 @@
                     <tr>
                         <th>#</th>
                         <th>Date</th>
+                        <th>Type</th>
                         <th>Détails</th>
-                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -57,14 +57,23 @@
                     <tr>
                         <td><?= $don['id'] ?></td>
                         <td><?= date('d/m/Y H:i', strtotime($don['date_don'])) ?></td>
-                        <td><?= htmlspecialchars($don['details'] ?? 'Aucun détail') ?></td>
                         <td>
-                            <div class="actions">
-                                <a href="<?= BASE_URL ?>/dons/<?= $don['id'] ?>/modifier" class="btn btn-icon btn-outline btn-sm" title="Modifier"><i class="bi bi-pencil"></i></a>
-                                <form method="POST" action="<?= BASE_URL ?>/dons/<?= $don['id'] ?>/supprimer" style="display: inline;" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce don ?');">
-                                    <button type="submit" class="btn btn-icon btn-outline btn-sm" title="Supprimer"><i class="bi bi-trash"></i></button>
-                                </form>
-                            </div>
+                            <?php if ($don['source'] === 'financier'): ?>
+                                <span style="display: inline-block; padding: 3px 10px; border-radius: 4px; font-size: 0.8rem; font-weight: 600; background: #e8f5e9; color: #2e7d32;">
+                                    <i class="bi bi-cash-coin"></i> Financier
+                                </span>
+                            <?php else: ?>
+                                <span style="display: inline-block; padding: 3px 10px; border-radius: 4px; font-size: 0.8rem; font-weight: 600; background: #e3f2fd; color: #1565c0;">
+                                    <i class="bi bi-box-seam"></i> Biens
+                                </span>
+                            <?php endif; ?>
+                        </td>
+                        <td>
+                            <?php if ($don['source'] === 'financier'): ?>
+                                <strong><?= number_format($don['montant'], 0, ',', ' ') ?> Ar</strong>
+                            <?php else: ?>
+                                <?= htmlspecialchars($don['details'] ?? 'Aucun détail') ?>
+                            <?php endif; ?>
                         </td>
                     </tr>
                     <?php endforeach; ?>

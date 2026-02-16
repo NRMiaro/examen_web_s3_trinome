@@ -28,9 +28,10 @@ class DonController
         } else {
             $dons = $this->model->getAllDons();
         }
-        
+
         Flight::render('dons/index', [
             'page_title'  => 'Dons',
+            'active_menu' => 'dons',
             'dons'        => $dons,
             'search'      => $search,
             'date_debut'  => $date_debut,
@@ -40,11 +41,12 @@ class DonController
 
     public function create()
     {
-        $besoins = $this->model->getAllBesoins();
+        $all_besoins = $this->model->getAllBesoins();
         Flight::render('dons/form', [
             'page_title'  => 'Nouveau don',
+            'active_menu' => 'dons',
             'action'      => BASE_URL . '/dons',
-            'besoins'     => $besoins,
+            'all_besoins' => $all_besoins,
         ]);
     }
 
@@ -53,44 +55,15 @@ class DonController
         $request = Flight::request();
         
         if ($request->method === 'POST') {
-            $data = $request->data->getData();
+            $data = [
+                'type_don'  => $request->data->type_don,
+                'date_don'  => $request->data->date_don,
+                'montant'   => $request->data->montant,
+                'besoins'   => $request->data->besoins,
+                'quantites' => $request->data->quantites,
+            ];
             $this->model->insertDon($data);
-            Flight::redirect('dons');
+            Flight::redirect('/dons');
         }
-    }
-
-    public function edit($id)
-    {
-        $don = $this->model->getDonById($id);
-        
-        if (!$don) {
-            Flight::redirect('dons');
-            return;
-        }
-
-        $details = $this->model->getDonDetails($id);
-        $besoins = $this->model->getAllBesoins();
-        
-        Flight::render('dons/form', [
-            'page_title'  => 'Modifier don',
-            'action'      => BASE_URL . '/dons/' . $id,
-            'don'         => $don,
-            'details'     => $details,
-            'besoins'     => $besoins,
-        ]);
-    }
-
-    public function update($id)
-    {
-        $request = Flight::request();
-        $data = $request->data->getData();
-        $this->model->updateDon($id, $data);
-        Flight::redirect('dons');
-    }
-
-    public function delete($id)
-    {
-        $this->model->deleteDon($id);
-        Flight::redirect('dons');
     }
 }
