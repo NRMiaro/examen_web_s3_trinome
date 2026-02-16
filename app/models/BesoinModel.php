@@ -122,36 +122,4 @@ class BesoinModel
             throw $e;
         }
     }
-
-    public function getOrCreateBesoin($nom, $idType, $prix)
-    {
-        // Vérifier si le besoin existe
-        $stmt = $this->db->prepare("
-            SELECT id FROM s3_besoin 
-            WHERE nom = :nom AND id_type_besoin = :id_type
-        ");
-        $stmt->execute([
-            ':nom' => $nom,
-            ':id_type' => $idType
-        ]);
-        
-        $result = $stmt->fetch(\PDO::FETCH_ASSOC);
-        
-        if ($result) {
-            return $result['id'];
-        }
-
-        // Créer le besoin s'il n'existe pas
-        $stmtInsert = $this->db->prepare("
-            INSERT INTO s3_besoin (nom, id_type_besoin, prix)
-            VALUES (:nom, :id_type, :prix)
-        ");
-        $stmtInsert->execute([
-            ':nom' => $nom,
-            ':id_type' => $idType,
-            ':prix' => $prix
-        ]);
-
-        return $this->db->lastInsertId();
-    }
 }

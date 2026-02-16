@@ -29,13 +29,22 @@ class BesoinController
     public function create()
     {
         $villes = $this->model->getAllVilles();
-        $types = $this->model->getAllTypes();
+        $besoins = $this->model->getAllBesoins();
         Flight::render('besoins/form', [
-            'page_title'  => 'Nouveau besoin',
+            'page_title'  => 'Nouvelle demande de besoin',
             'action'      => BASE_URL . '/besoins',
             'villes'      => $villes,
-            'types'       => $types,
+            'besoins'     => $besoins,
             'date_besoin' => date('Y-m-d\TH:i'),
+        ]);
+    }
+
+    public function creer()
+    {
+        $types = $this->model->getAllTypes();
+        Flight::render('besoins/creer', [
+            'page_title'  => 'Ajouter un besoin',
+            'types'       => $types,
         ]);
     }
 
@@ -44,43 +53,43 @@ class BesoinController
         $request = Flight::request();
         
         if ($request->method === 'POST') {
-            $idVille = $request->data->id_ville;
-            $dateBesoin = $request->data->date_besoin;
-            $nomBesoins = $request->data->{'nom_besoin'} ?? [];
-            $typeBesoins = $request->data->{'id_type_besoin'} ?? [];
-            $prixBesoins = $request->data->{'prix_besoin'} ?? [];
-            $quantites = $request->data->quantite ?? [];
+            // Créer un nouveau besoin
+            if (isset($request->data->nom) && isset($request->data->id_type_besoin) && isset($request->data->prix)) {
+                $this->model->insertBesoin([
+                    'nom' => $request->data->nom,
+                    'id_type_besoin' => $request->data->id_type_besoin,
+                    'prix' => $request->data->prix,
+                ]);
+                Flight::redirect('/besoins');
+            } else {
+                // Créer une demande de besoin pour une ville
+                $idVille = $request->data->id_ville;
+                $dateBesoin = $request->data->date_besoin;
+                $idBesoins = $request->data->{'id_besoin'} ?? [];
+                $quantites = $request->data->quantite ?? [];
 
-            if (!$idVille || !$dateBesoin || empty($nomBesoins)) {
-                Flight::redirect('/besoins/nouveau');
-                return;
-            }
+                if (!$idVille || !$dateBesoin || empty($idBesoins)) {
+                    Flight::redirect('/besoins/nouveau');
+                    return;
+                }
 
-            // Créer les besoins et ajouter à la ville
-            $besoins = [];
-            foreach ($nomBesoins as $index => $nom) {
-                if (!empty($nom) && isset($typeBesoins[$index]) && isset($prixBesoins[$index]) && isset($quantites[$index])) {
-                    // Créer ou récupérer le besoin
-                    $idBesoin = $this->model->getOrCreateBesoin(
-                        $nom,
-                        $typeBesoins[$index],
-                        $prixBesoins[$index]
-                    );
-
-                    if ($quantites[$index] > 0) {
+                // Construire le tableau des besoins
+                $besoins = [];
+                foreach ($idBesoins as $index => $idBesoin) {
+                    if (isset($quantites[$index]) && $quantites[$index] > 0) {
                         $besoins[] = [
                             'id_besoin' => $idBesoin,
                             'quantite' => $quantites[$index]
                         ];
                     }
                 }
-            }
 
-            if (!empty($besoins)) {
-                $this->model->createBesoinVille($idVille, $dateBesoin, $besoins);
-            }
+                if (!empty($besoins)) {
+                    $this->model->createBesoinVille($idVille, $dateBesoin, $besoins);
+                }
 
-            Flight::redirect('/besoins');
+                Flight::redirect('/besoins');
+            }
         }
     }
 

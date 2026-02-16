@@ -37,32 +37,22 @@
                 <div id="besoins-container">
                     <div class="besoin-item" style="border: 1px solid #ddd; padding: 15px; border-radius: 5px; margin-bottom: 15px;">
                         <div class="form-row">
-                            <div class="form-group" style="flex: 1; margin-right: 10px;">
-                                <label class="form-label">Nom du besoin <span class="required">*</span></label>
-                                <input type="text" name="nom_besoin[]" class="form-input" placeholder="Ex: Riz" required>
-                            </div>
-
-                            <div class="form-group" style="flex: 1; margin-right: 10px;">
-                                <label class="form-label">Type <span class="required">*</span></label>
-                                <select name="id_type_besoin[]" class="form-select" required>
-                                    <option value="">-- Sélectionner un type --</option>
-                                    <?php foreach ($types as $type): ?>
-                                    <option value="<?= $type['id'] ?>">
-                                        <?= ucfirst(htmlspecialchars($type['nom'])) ?>
+                            <div class="form-group" style="flex: 2; margin-right: 10px;">
+                                <label class="form-label">Besoin <span class="required">*</span></label>
+                                <select name="id_besoin[]" class="form-select" required>
+                                    <option value="">-- Sélectionner un besoin --</option>
+                                    <?php foreach ($besoins as $besoin): ?>
+                                    <option value="<?= $besoin['id'] ?>">
+                                        <?= htmlspecialchars($besoin['nom']) ?> (<?= ucfirst(htmlspecialchars($besoin['type_nom'])) ?>) - <?= $besoin['prix'] ?> Ar
                                     </option>
                                     <?php endforeach; ?>
                                 </select>
                             </div>
 
                             <div class="form-group" style="flex: 1;">
-                                <label class="form-label">Prix unitaire (Ar) <span class="required">*</span></label>
-                                <input type="number" name="prix_besoin[]" class="form-input" placeholder="1000" min="0" required>
+                                <label class="form-label">Quantité <span class="required">*</span></label>
+                                <input type="number" name="quantite[]" class="form-input" placeholder="1" min="1" required>
                             </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label">Quantité <span class="required">*</span></label>
-                            <input type="number" name="quantite[]" class="form-input" placeholder="1" min="1" required>
                         </div>
 
                         <button type="button" class="btn btn-sm btn-danger remove-besoin" style="display: none;">Supprimer</button>

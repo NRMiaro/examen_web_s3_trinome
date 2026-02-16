@@ -27,6 +27,11 @@ $router->group('', function (Router $router) use ($app) {
             $controller->create();
         });
 
+        $router->get('/creer', function () use ($app) {
+            $controller = new BesoinController($app);
+            $controller->creer();
+        });
+
         $router->post('', function () use ($app) {
             $controller = new BesoinController($app);
             $controller->store();

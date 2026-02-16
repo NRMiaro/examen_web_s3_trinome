@@ -9,8 +9,11 @@
         </div>
     </div>
     <div class="page-header-actions">
-        <a href="<?= BASE_URL ?>/besoins/nouveau" class="btn btn-primary">
-            <i class="bi bi-plus-lg"></i> Nouveau besoin
+        <a href="<?= BASE_URL ?>/besoins/creer" class="btn btn-primary">
+            <i class="bi bi-plus-lg"></i> Ajouter un besoin
+        </a>
+        <a href="<?= BASE_URL ?>/besoins/nouveau" class="btn btn-secondary">
+            <i class="bi bi-clipboard-plus"></i> Nouvelle demande
         </a>
     </div>
 </div>
