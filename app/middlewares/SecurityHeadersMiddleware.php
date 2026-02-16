@@ -25,7 +25,8 @@ class SecurityHeadersMiddleware
 			$tracyCssBypass = ' \'unsafe-inline\'';
 		}
 
-		$csp = "default-src 'self'; script-src 'self' 'nonce-{$nonce}' 'strict-dynamic'; style-src 'self' {$tracyCssBypass}; img-src 'self' data:; font-src 'self';";
+		// CSP : autorise Google Fonts et les scripts/styles locaux
+		$csp = "default-src 'self'; script-src 'self' 'nonce-{$nonce}'; style-src 'self' {$tracyCssBypass} https://fonts.googleapis.com; img-src 'self' data:; font-src 'self' https://fonts.gstatic.com;";
 		$this->app->response()->header('X-Frame-Options', 'SAMEORIGIN');
 		$this->app->response()->header("Content-Security-Policy", $csp);
 		$this->app->response()->header('X-XSS-Protection', '1; mode=block');

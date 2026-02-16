@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Sidebar Toggle</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/assets/bootstrap/bootstrap-icons/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="/assets/css/dashboard.css">
+</head>
+<body>
+
+<div class="app-wrapper">
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-brand">
+            <div class="brand-icon"><i class="bi bi-shield-check"></i></div>
+            <span class="brand-text">BNGRC</span>
+        </div>
+
+        <nav class="sidebar-nav">
+            <div class="nav-section-title">Test</div>
+            <a href="#" class="nav-link active">
+                <i class="bi bi-grid-1x2"></i>
+                <span class="nav-label">Tableau de bord</span>
+            </a>
+            <a href="#" class="nav-link">
+                <i class="bi bi-box-seam"></i>
+                <span class="nav-label">Collectes</span>
+            </a>
+        </nav>
+
+        <button class="sidebar-toggle" id="sidebar-toggle">
+            <i class="bi bi-chevron-left"></i>
+        </button>
+    </aside>
+
+    <div class="main-wrapper">
+        <header class="topbar">
+            <div class="topbar-left">
+                <div class="topbar-brand">
+                    <i class="bi bi-shield-check"></i>
+                    <span>Test Sidebar</span>
+                </div>
+            </div>
+        </header>
+
+        <main class="content-area">
+            <h1>Test du Toggle de Sidebar</h1>
+            <p>Cliquez sur le bouton "&lt;" en bas de la sidebar pour la rétracter.</p>
+            <p>La sidebar devrait passer de 268px à 74px de largeur.</p>
+            
+            <div style="margin-top: 20px; padding: 20px; background: white; border-radius: 10px;">
+                <h3>Statut actuel:</h3>
+                <p id="status">En attente du clic...</p>
+            </div>
+        </main>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('DOM Loaded');
+    
+    const sidebarToggle = document.getElementById('sidebar-toggle');
+    const statusEl = document.getElementById('status');
+    
+    if (sidebarToggle) {
+        console.log('Bouton trouvé!');
+        
+        sidebarToggle.addEventListener('click', () => {
+            console.log('Clic détecté!');
+            document.body.classList.toggle('sidebar-collapsed');
+            
+            const collapsed = document.body.classList.contains('sidebar-collapsed');
+            console.log('Sidebar collapsed:', collapsed);
+            
+            if (statusEl) {
+                statusEl.textContent = collapsed ? 
+                    '✅ Sidebar rétractée (74px)' : 
+                    '⬅️ Sidebar étendue (268px)';
+            }
+            
+            try { 
+                localStorage.setItem('sidebar_collapsed', collapsed ? '1' : '0'); 
+            } catch(e) {
+                console.error('LocalStorage error:', e);
+            }
+        });
+        
+        // Restaurer l'état depuis localStorage
+        try {
+            if (localStorage.getItem('sidebar_collapsed') === '1' && window.innerWidth > 1024) {
+                document.body.classList.add('sidebar-collapsed');
+                if (statusEl) statusEl.textContent = '✅ Sidebar rétractée (restaurée depuis localStorage)';
+            }
+        } catch(e) {
+            console.error('LocalStorage error:', e);
+        }
+    } else {
+        console.error('Bouton sidebar-toggle non trouvé!');
+        if (statusEl) statusEl.textContent = '❌ Erreur: Bouton non trouvé';
+    }
+});
+</script>
+
+</body>
+</html>

@@ -292,13 +292,17 @@ body.sidebar-collapsed .nav-link.active::before {
     z-index: 10;
 }
 
+.sidebar-toggle i {
+    transition: transform var(--transition);
+}
+
 .sidebar-toggle:hover {
     background: rgba(194, 73, 29, .18);
     border-color: rgba(194, 73, 29, .30);
     color: #FCEEE6;
 }
 
-body.sidebar-collapsed .sidebar-toggle .icon {
+body.sidebar-collapsed .sidebar-toggle i {
     transform: rotate(180deg);
 }
 
