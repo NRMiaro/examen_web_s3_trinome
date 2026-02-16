@@ -61,7 +61,7 @@
                     <?php endif; ?>
                 </div>
 
-                <button type="button" class="btn btn-outline btn-sm" onclick="ajouterLigne()" style="margin-bottom: 20px;">
+                <button type="button" id="btn-ajouter-besoin" class="btn btn-outline btn-sm" style="margin-bottom: 20px;">
                     <i class="bi bi-plus-lg"></i> Ajouter un besoin
                 </button>
 
@@ -74,7 +74,11 @@
     </div>
 </div>
 
-<script>
+<script nonce="<?= Flight::app()->get('csp_nonce') ?>">
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('btn-ajouter-besoin').addEventListener('click', ajouterLigne);
+});
+
 function ajouterLigne() {
     const container = document.getElementById('don-details');
     const ligne = document.createElement('div');
