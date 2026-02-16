@@ -13,45 +13,66 @@
 <div class="card">
     <div class="card-body">
         <div class="form-container">
-            <form action="<?= $action ?? '/dons' ?>" method="POST">
+            <form action="<?= $action ?? (BASE_URL . '/dons') ?>" method="POST">
                 <div class="form-row">
                     <div class="form-group">
                         <label class="form-label">Date du don <span class="required">*</span></label>
-                        <input type="datetime-local" name="date_don" class="form-input" value="<?= isset($don) ? date('Y-m-d\TH:i', strtotime($don['date_don'])) : '' ?>" required>
+                        <input type="datetime-local" name="date_don" class="form-input" required>
                     </div>
                 </div>
 
-                <h4 style="margin: 24px 0 16px; font-size: 1rem; font-weight: 600;">Détails du don</h4>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Type de don <span class="required">*</span></label>
+                        <select name="type_don" id="type-don-select" class="form-select" required>
+                            <option value="">-- Sélectionner le type --</option>
+                            <option value="financier">Financier (argent)</option>
+                            <option value="besoin">Don de biens (nature / matériel)</option>
+                        </select>
+                    </div>
+                </div>
 
-                <div id="don-details">
-                    <div class="form-row" style="align-items: end;">
+                <!-- Section Don Financier -->
+                <div id="section-financier" style="display: none;">
+                    <h4 style="margin: 24px 0 16px; font-size: 1rem; font-weight: 600;">
+                        <i class="bi bi-cash-coin"></i> Montant du don
+                    </h4>
+                    <div class="form-row">
                         <div class="form-group">
-                            <label class="form-label">Type de don</label>
-                            <select name="types[]" class="form-select type-select">
-                                <option value="">-- Sélectionner --</option>
-                                <option value="financier">Financier</option>
-                                <option value="besoin">Besoin</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Besoin (si applicable)</label>
-                            <select name="besoins[]" class="form-select besoin-select" style="display:none;">
-                                <option value="">-- Sélectionner un besoin --</option>
-                                <?php foreach ($all_besoins ?? [] as $b): ?>
-                                <option value="<?= $b['id'] ?>"><?= htmlspecialchars($b['nom']) ?></option>
-                                <?php endforeach; ?>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Quantité</label>
-                            <input type="number" name="quantites[]" class="form-input" placeholder="1000">
+                            <label class="form-label">Montant (Ar) <span class="required">*</span></label>
+                            <input type="number" name="montant" id="input-montant" class="form-input" min="1" placeholder="100000">
                         </div>
                     </div>
                 </div>
 
-                <button type="button" id="btn-ajouter-besoin" class="btn btn-outline btn-sm" style="margin-bottom: 20px;">
-                    <i class="bi bi-plus-lg"></i> Ajouter une ligne
-                </button>
+                <!-- Section Don de Biens -->
+                <div id="section-biens" style="display: none;">
+                    <h4 style="margin: 24px 0 16px; font-size: 1rem; font-weight: 600;">
+                        <i class="bi bi-box-seam-fill"></i> Détails des biens donnés
+                    </h4>
+
+                    <div id="don-details">
+                        <div class="don-ligne form-row" style="align-items: end;">
+                            <div class="form-group" style="flex: 2;">
+                                <label class="form-label">Besoin</label>
+                                <select name="besoins[]" class="form-select">
+                                    <option value="">-- Sélectionner un besoin --</option>
+                                    <?php foreach ($all_besoins ?? [] as $b): ?>
+                                    <option value="<?= $b['id'] ?>"><?= htmlspecialchars($b['nom']) ?> (<?= $b['type_nom'] ?>)</option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Quantité</label>
+                                <input type="number" name="quantites[]" class="form-input" min="1" placeholder="1000">
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="button" id="btn-ajouter-ligne" class="btn btn-outline btn-sm" style="margin-bottom: 20px;">
+                        <i class="bi bi-plus-lg"></i> Ajouter une ligne
+                    </button>
+                </div>
 
                 <div class="form-actions">
                     <a href="<?= BASE_URL ?>/dons" class="btn btn-outline">Annuler</a>
@@ -64,73 +85,68 @@
 
 <script nonce="<?= Flight::app()->get('csp_nonce') ?>">
 document.addEventListener('DOMContentLoaded', function() {
-    document.getElementById('btn-ajouter-besoin')?.addEventListener('click', ajouterLigne);
+    var typeDonSelect = document.getElementById('type-don-select');
+    var sectionFin = document.getElementById('section-financier');
+    var sectionBiens = document.getElementById('section-biens');
+    var inputMontant = document.getElementById('input-montant');
 
-    // attacher listeners aux selects existants
-    document.querySelectorAll('.type-select').forEach(function(typeSelect) {
-        const row = typeSelect.closest('.form-row');
-        const besoinSelect = row ? row.querySelector('.besoin-select') : null;
-        typeSelect.addEventListener('change', function() {
-            if (besoinSelect) {
-                if (this.value === 'besoin') {
-                    besoinSelect.style.display = '';
-                } else {
-                    besoinSelect.style.display = 'none';
-                    besoinSelect.value = '';
-                }
-            }
+    // Toggle entre les deux sections
+    typeDonSelect.addEventListener('change', function() {
+        if (this.value === 'financier') {
+            sectionFin.style.display = '';
+            sectionBiens.style.display = 'none';
+            inputMontant.required = true;
+            // Désactiver les champs biens
+            document.querySelectorAll('#don-details select, #don-details input').forEach(function(el) {
+                el.removeAttribute('required');
+            });
+        } else if (this.value === 'besoin') {
+            sectionFin.style.display = 'none';
+            sectionBiens.style.display = '';
+            inputMontant.required = false;
+            inputMontant.value = '';
+        } else {
+            sectionFin.style.display = 'none';
+            sectionBiens.style.display = 'none';
+            inputMontant.required = false;
+        }
+    });
+
+    // Ajouter une ligne de besoin
+    document.getElementById('btn-ajouter-ligne').addEventListener('click', function() {
+        var container = document.getElementById('don-details');
+        var ligne = document.createElement('div');
+        ligne.className = 'don-ligne form-row';
+        ligne.style.alignItems = 'end';
+
+        var besoinsOptions = '<option value="">-- Sélectionner un besoin --</option>';
+        <?php foreach ($all_besoins ?? [] as $b): ?>
+        besoinsOptions += '<option value="<?= $b['id'] ?>"><?= htmlspecialchars($b['nom']) ?> (<?= $b['type_nom'] ?>)</option>';
+        <?php endforeach; ?>
+
+        ligne.innerHTML =
+            '<div class="form-group" style="flex: 2;">' +
+                '<label class="form-label">Besoin</label>' +
+                '<select name="besoins[]" class="form-select">' + besoinsOptions + '</select>' +
+            '</div>' +
+            '<div class="form-group">' +
+                '<label class="form-label">Quantité</label>' +
+                '<input type="number" name="quantites[]" class="form-input" min="1" placeholder="1000">' +
+            '</div>' +
+            '<div class="form-group" style="flex: 0;">' +
+                '<button type="button" class="btn btn-icon btn-outline btn-sm btn-suppr-ligne" title="Supprimer">' +
+                    '<i class="bi bi-trash"></i>' +
+                '</button>' +
+            '</div>';
+
+        container.appendChild(ligne);
+
+        // Attacher suppression
+        ligne.querySelector('.btn-suppr-ligne').addEventListener('click', function() {
+            ligne.remove();
         });
     });
 });
-
-function ajouterLigne() {
-    const container = document.getElementById('don-details');
-    const ligne = document.createElement('div');
-    ligne.className = 'form-row';
-    ligne.style.alignItems = 'end';
-    // construire ligne avec type limité à financier/besoin et select de besoins caché
-    const besoinsOptions = `
-        <option value="">-- Sélectionner un besoin --</option>
-        <?php foreach ($all_besoins ?? [] as $b): ?>
-        <option value="<?= $b['id'] ?>"><?= htmlspecialchars($b['nom']) ?></option>
-        <?php endforeach; ?>
-    `;
-
-    ligne.innerHTML = `
-        <div class="form-group">
-            <label class="form-label">Type de don</label>
-            <select name="types[]" class="form-select type-select">
-                <option value="">-- Sélectionner --</option>
-                <option value="financier">Financier</option>
-                <option value="besoin">Besoin</option>
-            </select>
-        </div>
-        <div class="form-group">
-            <label class="form-label">Besoin (si applicable)</label>
-            <select name="besoins[]" class="form-select besoin-select" style="display:none;">
-                ${besoinsOptions}
-            </select>
-        </div>
-        <div class="form-group">
-            <label class="form-label">Quantité</label>
-            <input type="number" name="quantites[]" class="form-input" placeholder="1000">
-        </div>
-    `;
-
-    container.appendChild(ligne);
-
-    // attacher le listener sur le select type juste créé
-    const typeSelect = ligne.querySelector('.type-select');
-    const besoinSelect = ligne.querySelector('.besoin-select');
-    typeSelect.addEventListener('change', function() {
-        if (this.value === 'besoin') {
-            besoinSelect.style.display = '';
-        } else {
-            besoinSelect.style.display = 'none';
-            besoinSelect.value = '';
-        }
-    });
-}
 </script>
 
 <?php include __DIR__ . '/../include/footer.php'; ?>

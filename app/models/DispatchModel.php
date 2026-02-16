@@ -4,17 +4,8 @@ namespace app\models;
 
 use Flight;
 
-/**
- * Model pour la simulation de dispatch des dons
- * Gère l'allocation séquentielle des dons par ordre de date de demande
- */
 class DispatchModel
 {
-    /**
-     * Récupère toutes les demandes triées par date pour chaque besoin
-     * Récupère aussi la quantité réelle par produit (pas par demande)
-     * @return array Demandes groupées par besoin
-     */
     public static function getDemandesTotales(): array
     {
         $sql = "
@@ -36,13 +27,6 @@ class DispatchModel
         return $statement->fetchAll(\PDO::FETCH_ASSOC);
     }
 
-    /**
-     * Calcule le dispatch des dons de manière séquentielle par date
-     * Chaque produit d'une demande est traité individuellement
-     * @param array $dons Dons disponibles ['nom_besoin' => quantite, ...]
-     * @param array $demandes Toutes les demandes avec détails par produit
-     * @return array Dispatch avec statuts, clé = id_besoin_ville + id_besoin combinés
-     */
     public static function calculerDispatch(array $dons, array $demandes): array
     {
         // Grouper les demandes par besoin (type de produit) et trier par date
@@ -74,11 +58,11 @@ class DispatchModel
 
                 // Déterminer le statut
                 if ($manquant === 0) {
-                    $statut = 'resolved'; // ✅ Complété
+                    $statut = 'resolved'; 
                 } elseif ($alloue > 0) {
-                    $statut = 'partial'; // ⏳ En attente
+                    $statut = 'partial'; 
                 } else {
-                    $statut = 'unresolved'; // ❌ Invalide
+                    $statut = 'unresolved'; 
                 }
 
                 // Clé unique : combinaison id_besoin_ville + id_besoin
@@ -105,10 +89,6 @@ class DispatchModel
         return $dispatch;
     }
 
-    /**
-     * Récupère les données complètes pour la vue de dispatch
-     * @return array ['dons' => [...], 'demandes' => [...], 'dispatch' => [...]]
-     */
     public static function getDispatchComplet(): array
     {
         $donsModel = new \app\models\DashboardModel();

@@ -41,6 +41,10 @@
                 <i class="bi bi-cash-coin"></i>
                 <span class="nav-label">Caisse</span>
             </a>
+            <a href="<?= BASE_URL ?>/achats" class="nav-link <?= ($active_menu ?? '') === 'achats' ? 'active' : '' ?>">
+                <i class="bi bi-cart-fill"></i>
+                <span class="nav-label">Achats</span>
+            </a>
         </nav>
 
         <button class="sidebar-toggle" id="sidebar-toggle">

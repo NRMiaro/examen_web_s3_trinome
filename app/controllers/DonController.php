@@ -29,12 +29,10 @@ class DonController
             $dons = $this->model->getAllDons();
         }
 
-        $types_don = $this->model->getAllTypesDon();
-        
         Flight::render('dons/index', [
             'page_title'  => 'Dons',
+            'active_menu' => 'dons',
             'dons'        => $dons,
-            'types_don'   => $types_don,
             'search'      => $search,
             'date_debut'  => $date_debut,
             'date_fin'    => $date_fin,
@@ -43,12 +41,11 @@ class DonController
 
     public function create()
     {
-        $types_don = $this->model->getAllTypesDon();
         $all_besoins = $this->model->getAllBesoins();
         Flight::render('dons/form', [
             'page_title'  => 'Nouveau don',
+            'active_menu' => 'dons',
             'action'      => BASE_URL . '/dons',
-            'types_don'   => $types_don,
             'all_besoins' => $all_besoins,
         ]);
     }
@@ -58,9 +55,15 @@ class DonController
         $request = Flight::request();
         
         if ($request->method === 'POST') {
-            $data = $request->data->getData();
+            $data = [
+                'type_don'  => $request->data->type_don,
+                'date_don'  => $request->data->date_don,
+                'montant'   => $request->data->montant,
+                'besoins'   => $request->data->besoins,
+                'quantites' => $request->data->quantites,
+            ];
             $this->model->insertDon($data);
-            Flight::redirect('dons');
+            Flight::redirect('/dons');
         }
     }
 }
