@@ -91,7 +91,7 @@ VALUES
     (3);
 
 -- Insertion de l'historique des états
-INSERT INTO trinome_historique_etat_besoin_ville (id_besoin_ville, date, id_etat_besoin) 
+INSERT INTO trinome_historique_etat_besoin_ville (id_besoin_ville, date_, id_etat_besoin) 
 VALUES 
     (1, NOW(), 1),           -- Besoin 1 délivré (dans trinome_don)
     (1, NOW(), 2),           -- Besoin 1 délivré (dans trinome_don)
