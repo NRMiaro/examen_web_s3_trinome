@@ -10,52 +10,23 @@
     </div>
 </div>
 
-<?php
-// Dons disponibles
-$dons_disponibles = [
-    'Riz' => 2500,
-    'Huile' => 1200
-];
-
-// Besoins par ville
-$villes = [
-    [
-        'nom' => 'Antananarivo',
-        'date' => '16/02/2026',
-        'besoins' => [
-            ['nom' => 'Riz', 'quantite' => 1000, 'unite' => 'kg'],
-            ['nom' => 'Huile', 'quantite' => 500, 'unite' => 'L']
-        ]
-    ],
-    [
-        'nom' => 'Mahajanga',
-        'date' => '16/02/2026',
-        'besoins' => [
-            ['nom' => 'Riz', 'quantite' => 2000, 'unite' => 'kg'],
-            ['nom' => 'Huile', 'quantite' => 1000, 'unite' => 'L']
-        ]
-    ]
-];
-?>
-
 <!-- Dons disponibles -->
 <div class="stats-grid">
+    <?php foreach ($dons_disponibles as $nom => $quantite): 
+        $demande = $total_demande[$nom] ?? 0;
+        $icon = ($nom === 'Huile' || $nom === 'Eau') ? 'bi-droplet-fill' : 'bi-gift-fill';
+        $color = ($nom === 'Huile' || $nom === 'Eau') ? 'blue' : 'green';
+        $unite = ($nom === 'Huile' || $nom === 'Eau') ? 'L' : 'kg';
+    ?>
     <div class="stat-card">
-        <div class="stat-icon green"><i class="bi bi-gift-fill"></i></div>
+        <div class="stat-icon <?= $color ?>"><i class="bi <?= $icon ?>"></i></div>
         <div class="stat-content">
-            <h3>Riz disponible</h3>
-            <div class="stat-value">2 500 kg</div>
-            <div class="stat-trend up">Pour 3 000 kg demandés</div>
+            <h3><?= htmlspecialchars($nom) ?> disponible</h3>
+            <div class="stat-value"><?= number_format($quantite, 0, ',', ' ') ?> <?= $unite ?></div>
+            <div class="stat-trend up">Pour <?= number_format($demande, 0, ',', ' ') ?> <?= $unite ?> demandés</div>
         </div>
     </div>
-    <div class="stat-card">
-        <div class="stat-icon blue"><i class="bi bi-droplet-fill"></i></div>
-        <div class="stat-content">
-            <h3>Huile disponible</h3>
-            <div class="stat-value">1 200 L</div>
-            <div class="stat-trend up">Pour 1 500 L demandés</div>
-        </div>
-    </div>
+    <?php endforeach; ?>
 </div>
 
 <!-- Villes et besoins -->
@@ -63,8 +34,8 @@ $villes = [
 <div class="card" style="margin-bottom: 24px;">
     <div class="card-header">
         <div>
-            <h3><i class="bi bi-geo-alt-fill"></i> <?= $ville['nom'] ?></h3>
-            <small class="text-muted"><?= $ville['date'] ?></small>
+            <h3><i class="bi bi-geo-alt-fill"></i> <?= htmlspecialchars($ville['nom']) ?></h3>
+            <small class="text-muted"><?= htmlspecialchars($ville['date']) ?></small>
         </div>
     </div>
     <div class="card-body" style="padding: 0;">
@@ -97,7 +68,7 @@ $villes = [
                         }
                     ?>
                     <tr>
-                        <td><strong><?= $besoin['nom'] ?></strong></td>
+                        <td><strong><?= htmlspecialchars($besoin['nom']) ?></strong></td>
                         <td><?= number_format($besoin['quantite'], 0, ',', ' ') ?> <?= $besoin['unite'] ?></td>
                         <td><?= number_format($don_dispo, 0, ',', ' ') ?> <?= $besoin['unite'] ?></td>
                         <td>
