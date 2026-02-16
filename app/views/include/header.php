@@ -29,37 +29,13 @@
             </a>
 
             <div class="nav-section-title">Gestion</div>
-            <a href="/collectes" class="nav-link <?= ($active_menu ?? '') === 'collectes' ? 'active' : '' ?>">
-                <i class="bi bi-box-seam"></i>
-                <span class="nav-label">Collectes</span>
-            </a>
-            <a href="/distributions" class="nav-link <?= ($active_menu ?? '') === 'distributions' ? 'active' : '' ?>">
-                <i class="bi bi-send"></i>
-                <span class="nav-label">Distributions</span>
-            </a>
             <a href="/besoins" class="nav-link <?= ($active_menu ?? '') === 'besoins' ? 'active' : '' ?>">
                 <i class="bi bi-clipboard-check"></i>
                 <span class="nav-label">Besoins</span>
             </a>
-
-            <div class="nav-section-title">Référence</div>
-            <a href="/villes" class="nav-link <?= ($active_menu ?? '') === 'villes' ? 'active' : '' ?>">
-                <i class="bi bi-geo-alt"></i>
-                <span class="nav-label">Villes / Zones</span>
-            </a>
-            <a href="/types-besoins" class="nav-link <?= ($active_menu ?? '') === 'types' ? 'active' : '' ?>">
-                <i class="bi bi-tags"></i>
-                <span class="nav-label">Types de besoins</span>
-            </a>
-
-            <div class="nav-section-title">Rapports</div>
-            <a href="/historique" class="nav-link <?= ($active_menu ?? '') === 'historique' ? 'active' : '' ?>">
-                <i class="bi bi-clock-history"></i>
-                <span class="nav-label">Historique</span>
-            </a>
-            <a href="/statistiques" class="nav-link <?= ($active_menu ?? '') === 'statistiques' ? 'active' : '' ?>">
-                <i class="bi bi-bar-chart-line"></i>
-                <span class="nav-label">Statistiques</span>
+            <a href="/dons" class="nav-link <?= ($active_menu ?? '') === 'dons' ? 'active' : '' ?>">
+                <i class="bi bi-gift-fill"></i>
+                <span class="nav-label">Dons</span>
             </a>
         </nav>
 

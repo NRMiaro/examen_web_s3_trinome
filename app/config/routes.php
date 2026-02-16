@@ -1,50 +1,85 @@
 <?php
 
 use app\controllers\DashboardController;
-use app\controllers\CollecteController;
-use app\controllers\DistributionController;
 use app\controllers\BesoinController;
-use app\controllers\ApiExampleController;
+use app\controllers\DonController;
 use app\middlewares\SecurityHeadersMiddleware;
 use flight\net\Router;
 use flight\Engine;
 
 $router->group('', function (Router $router) use ($app) {
 
+    // Dashboard
     $router->get('/', function () use ($app) {
         $controller = new DashboardController($app);
         $controller->index();
     });
 
-    $router->group('/collectes', function () use ($router, $app) {
-
+    // CRUD Besoins
+    $router->group('/besoins', function () use ($router, $app) {
         $router->get('', function () use ($app) {
-            $controller = new CollecteController($app);
+            $controller = new BesoinController($app);
             $controller->index();
         });
 
         $router->get('/nouveau', function () use ($app) {
-            $controller = new CollecteController($app);
+            $controller = new BesoinController($app);
             $controller->create();
+        });
+
+        $router->post('', function () use ($app) {
+            $controller = new BesoinController($app);
+            $controller->store();
+        });
+
+        $router->get('/@id/modifier', function ($id) use ($app) {
+            $controller = new BesoinController($app);
+            $controller->edit($id);
+        });
+
+        $router->post('/@id', function ($id) use ($app) {
+            $controller = new BesoinController($app);
+            $controller->update($id);
+        });
+
+        $router->post('/@id/supprimer', function ($id) use ($app) {
+            $controller = new BesoinController($app);
+            $controller->delete($id);
         });
     });
 
-    $router->group('/distributions', function () use ($router, $app) {
-
+    // CRUD Dons
+    $router->group('/dons', function () use ($router, $app) {
         $router->get('', function () use ($app) {
-            $controller = new DistributionController($app);
+            $controller = new DonController($app);
             $controller->index();
         });
 
         $router->get('/nouveau', function () use ($app) {
-            $controller = new DistributionController($app);
+            $controller = new DonController($app);
             $controller->create();
         });
-    });
 
-    $router->get('/besoins', function () use ($app) {
-        $controller = new BesoinController($app);
-        $controller->index();
+        $router->post('', function () use ($app) {
+            $controller = new DonController($app);
+            $controller->store();
+        });
+
+        $router->get('/@id/modifier', function ($id) use ($app) {
+            $controller = new DonController($app);
+            $controller->edit($id);
+        });
+
+        $router->post('/@id', function ($id) use ($app) {
+            $controller = new DonController($app);
+            $controller->update($id);
+        });
+
+        $router->post('/@id/supprimer', function ($id) use ($app) {
+            $controller = new DonController($app);
+            $controller->delete($id);
+        });
     });
 
 }, [SecurityHeadersMiddleware::class]);
+
