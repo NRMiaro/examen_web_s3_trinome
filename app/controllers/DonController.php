@@ -28,10 +28,13 @@ class DonController
         } else {
             $dons = $this->model->getAllDons();
         }
+
+        $types_don = $this->model->getAllTypesDon();
         
         Flight::render('dons/index', [
             'page_title'  => 'Dons',
             'dons'        => $dons,
+            'types_don'   => $types_don,
             'search'      => $search,
             'date_debut'  => $date_debut,
             'date_fin'    => $date_fin,
@@ -40,11 +43,13 @@ class DonController
 
     public function create()
     {
-        $besoins = $this->model->getAllBesoins();
+        $types_don = $this->model->getAllTypesDon();
+        $all_besoins = $this->model->getAllBesoins();
         Flight::render('dons/form', [
             'page_title'  => 'Nouveau don',
             'action'      => BASE_URL . '/dons',
-            'besoins'     => $besoins,
+            'types_don'   => $types_don,
+            'all_besoins' => $all_besoins,
         ]);
     }
 
@@ -57,40 +62,5 @@ class DonController
             $this->model->insertDon($data);
             Flight::redirect('dons');
         }
-    }
-
-    public function edit($id)
-    {
-        $don = $this->model->getDonById($id);
-        
-        if (!$don) {
-            Flight::redirect('dons');
-            return;
-        }
-
-        $details = $this->model->getDonDetails($id);
-        $besoins = $this->model->getAllBesoins();
-        
-        Flight::render('dons/form', [
-            'page_title'  => 'Modifier don',
-            'action'      => BASE_URL . '/dons/' . $id,
-            'don'         => $don,
-            'details'     => $details,
-            'besoins'     => $besoins,
-        ]);
-    }
-
-    public function update($id)
-    {
-        $request = Flight::request();
-        $data = $request->data->getData();
-        $this->model->updateDon($id, $data);
-        Flight::redirect('dons');
-    }
-
-    public function delete($id)
-    {
-        $this->model->deleteDon($id);
-        Flight::redirect('dons');
     }
 }

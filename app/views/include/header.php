@@ -37,6 +37,10 @@
                 <i class="bi bi-gift-fill"></i>
                 <span class="nav-label">Dons</span>
             </a>
+            <a href="<?= BASE_URL ?>/caisse" class="nav-link <?= ($active_menu ?? '') === 'caisse' ? 'active' : '' ?>">
+                <i class="bi bi-cash-coin"></i>
+                <span class="nav-label">Caisse</span>
+            </a>
         </nav>
 
         <button class="sidebar-toggle" id="sidebar-toggle">
