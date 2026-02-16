@@ -1,7 +1,7 @@
 -- Décommenter ça si en local
 
--- DROP DATABASE IF EXISTS trinome_bngrc;
--- CREATE DATABASE trinome_bngrc;
+DROP DATABASE IF EXISTS trinome_bngrc;
+CREATE DATABASE trinome_bngrc;
 
 -- 
 
@@ -33,9 +33,6 @@ CREATE TABLE trinome_besoin (
     prix INT NOT NULL,
     FOREIGN KEY (id_type_besoin) REFERENCES trinome_type_besoin(id)
 );
-
-INSERT INTO trinome_besoin (id_type_besoin, nom, prix) 
-VALUES 
 
 CREATE TABLE trinome_besoin_ville (
     id INT AUTO_INCREMENT PRIMARY KEY,
