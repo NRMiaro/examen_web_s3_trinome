@@ -96,7 +96,7 @@ class BesoinController
                     $this->model->createBesoinVille($idVille, $dateBesoin, $besoins);
                 }
 
-                Flight::redirect('/besoins');
+                Flight::redirect('besoins');
             }
         }
     }
@@ -106,7 +106,7 @@ class BesoinController
         $besoin = $this->model->getBesoinById($id);
         
         if (!$besoin) {
-            Flight::redirect('/besoins');
+            Flight::redirect('besoins');
             return;
         }
 
@@ -124,12 +124,12 @@ class BesoinController
         $request = Flight::request();
         $data = $request->data->getData();
         $this->model->updateBesoin($id, $data);
-        Flight::redirect('/besoins');
+        Flight::redirect('besoins');
     }
 
     public function delete($id)
     {
         $this->model->deleteBesoin($id);
-        Flight::redirect('/besoins');
+        Flight::redirect('besoins');
     }
 }

@@ -40,13 +40,14 @@
                     <tr>
                         <th>#</th>
                         <th>Date</th>
+                        <th>Type</th>
                         <th>Détails</th>
                     </tr>
                 </thead>
                 <tbody>
                     <?php if (empty($dons)): ?>
                     <tr>
-                        <td colspan="3" style="text-align: center; padding: 40px; color: var(--color-text-secondary);">
+                        <td colspan="4" style="text-align: center; padding: 40px; color: var(--color-text-secondary);">
                             <i class="bi bi-inbox" style="font-size: 2rem; display: block; margin-bottom: 12px;"></i>
                             Aucun don enregistré
                         </td>
@@ -56,7 +57,24 @@
                     <tr>
                         <td><?= $don['id'] ?></td>
                         <td><?= date('d/m/Y H:i', strtotime($don['date_don'])) ?></td>
-                        <td><?= htmlspecialchars($don['details'] ?? 'Aucun détail') ?></td>
+                        <td>
+                            <?php if ($don['source'] === 'financier'): ?>
+                                <span style="display: inline-block; padding: 3px 10px; border-radius: 4px; font-size: 0.8rem; font-weight: 600; background: #e8f5e9; color: #2e7d32;">
+                                    <i class="bi bi-cash-coin"></i> Financier
+                                </span>
+                            <?php else: ?>
+                                <span style="display: inline-block; padding: 3px 10px; border-radius: 4px; font-size: 0.8rem; font-weight: 600; background: #e3f2fd; color: #1565c0;">
+                                    <i class="bi bi-box-seam"></i> Biens
+                                </span>
+                            <?php endif; ?>
+                        </td>
+                        <td>
+                            <?php if ($don['source'] === 'financier'): ?>
+                                <strong><?= number_format($don['montant'], 0, ',', ' ') ?> Ar</strong>
+                            <?php else: ?>
+                                <?= htmlspecialchars($don['details'] ?? 'Aucun détail') ?>
+                            <?php endif; ?>
+                        </td>
                     </tr>
                     <?php endforeach; ?>
                     <?php endif; ?>

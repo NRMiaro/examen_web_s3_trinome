@@ -4,6 +4,7 @@ use app\controllers\DashboardController;
 use app\controllers\BesoinController;
 use app\controllers\DonController;
 use app\controllers\CaisseController;
+use app\controllers\AchatController;
 use app\models\DonModel;
 use app\middlewares\SecurityHeadersMiddleware;
 use flight\net\Router;
@@ -88,6 +89,29 @@ $router->group('', function (Router $router) use ($app) {
         $router->get('', function () use ($app) {
             $controller = new CaisseController($app);
             $controller->index();
+        });
+    });
+
+    // CRUD Achats
+    $router->group('/achats', function () use ($router, $app) {
+        $router->get('', function () use ($app) {
+            $controller = new AchatController($app);
+            $controller->index();
+        });
+
+        $router->get('/nouveau', function () use ($app) {
+            $controller = new AchatController($app);
+            $controller->create();
+        });
+
+        $router->post('', function () use ($app) {
+            $controller = new AchatController($app);
+            $controller->store();
+        });
+
+        $router->post('/@id/supprimer', function ($id) use ($app) {
+            $controller = new AchatController($app);
+            $controller->delete($id);
         });
     });
 

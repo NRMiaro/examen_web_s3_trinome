@@ -59,6 +59,9 @@ $app->set('flight.content_length', false);   // Send content length header. Usua
 $nonce = bin2hex(random_bytes(16));
 $app->set('csp_nonce', $nonce);
 
+// Frais d'achat en pourcentage (configurable)
+$app->set('frais_achat', 10);
+
 /**********************************************
  *           User Configuration               *
  **********************************************/
