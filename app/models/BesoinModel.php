@@ -23,6 +23,20 @@ class BesoinModel
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
 
+    public function searchBesoins($search)
+    {
+        $searchTerm = '%' . $search . '%';
+        $stmt = $this->db->prepare("
+            SELECT b.id, b.nom, b.prix, t.nom as type_nom
+            FROM s3_besoin b
+            JOIN s3_type_besoin t ON b.id_type_besoin = t.id
+            WHERE b.nom LIKE :search OR t.nom LIKE :search
+            ORDER BY b.id DESC
+        ");
+        $stmt->execute([':search' => $searchTerm]);
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+    }
+
     public function getBesoinById($id)
     {
         $stmt = $this->db->prepare("SELECT * FROM s3_besoin WHERE id = :id");

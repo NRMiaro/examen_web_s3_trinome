@@ -19,10 +19,18 @@ class DonController
 
     public function index()
     {
-        $dons = $this->model->getAllDons();
+        $search = Flight::request()->query->search ?? '';
+        
+        if (!empty($search)) {
+            $dons = $this->model->searchDons($search);
+        } else {
+            $dons = $this->model->getAllDons();
+        }
+        
         Flight::render('dons/index', [
             'page_title'  => 'Dons',
             'dons'        => $dons,
+            'search'      => $search,
         ]);
     }
 
