@@ -33,7 +33,7 @@
         <form method="POST" action="<?= BASE_URL ?>/simulation/reset" style="display: inline;" onsubmit="return confirm('Réinitialiser toutes les validations et achats ? Cette action est irréversible.');">
             <button type="submit" style="padding: 10px 20px; font-size: 1em; border-radius: 6px; background-color: #dc3545; color: white; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 8px;">
                 <i class="bi bi-arrow-counterclockwise"></i>
-                Réinitialiser
+                Réinitialiser les données
             </button>
         </form>
         <?php if (!empty($besoinsVilles)): ?>
