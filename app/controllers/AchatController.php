@@ -17,9 +17,6 @@ class AchatController
         $this->model = new AchatModel(Flight::db());
     }
 
-    /**
-     * Liste des achats avec filtre par ville
-     */
     public function index()
     {
         $id_ville = Flight::request()->query->id_ville ?? '';
@@ -38,9 +35,6 @@ class AchatController
         ]);
     }
 
-    /**
-     * Formulaire d'achat = liste des besoins restants
-     */
     public function create()
     {
         $besoinsRestants = $this->model->getBesoinsRestants();
@@ -60,9 +54,6 @@ class AchatController
         ]);
     }
 
-    /**
-     * Enregistre un achat
-     */
     public function store()
     {
         $request = Flight::request();
@@ -128,9 +119,6 @@ class AchatController
         }
     }
 
-    /**
-     * Supprime un achat
-     */
     public function delete($id)
     {
         $this->model->deleteAchat($id);

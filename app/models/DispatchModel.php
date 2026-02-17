@@ -27,9 +27,6 @@ class DispatchModel
         return $statement->fetchAll(\PDO::FETCH_ASSOC);
     }
 
-    /**
-     * Retourne les demandes qui n'ont jamais été validées.
-     */
     public static function getDemandesTotalesNonValidees()
     {
         $sql = "
@@ -56,19 +53,7 @@ class DispatchModel
         return $statement->fetchAll(\PDO::FETCH_ASSOC);
     }
 
-    /**
-     * Retourne les demandes qui ont encore un manque :
-     * - Soit jamais validées (pas d'entrée dans s3_dispatch_validation)
-     * - Soit validées mais avec quantite_manquante > 0 (partial ou unresolved)
-     * 
-     * Pour les demandes déjà partiellement validées, la quantite_demandee
-     * est ajustée à la quantite_manquante restante.
-     */
-    /**
-     * Retourne les demandes qui ont encore un manque RÉEL :
-     * manque = demandé - alloué(validé) - acheté
-     * Exclut les demandes entièrement couvertes par validation + achats.
-     */
+
     public static function getDemandesAvecManque()
     {
         $sql = "
@@ -168,10 +153,6 @@ class DispatchModel
         return $dispatch;
     }
 
-    /**
-     * Récupère les quantités déjà validées par besoin
-     * @return array ['Riz' => 500, 'Huile' => 200, ...]
-     */
     public static function getQuantitesDejaValidees(): array
     {
         $sql = "
@@ -188,12 +169,7 @@ class DispatchModel
         return $result;
     }
 
-    /**
-     * Calcule le dispatch complet.
-     * 
-     * @param bool $onlyNonValidated Si true, utilise seulement le stock restant (dons - déjà validé)
-     *                                et les demandes qui ont encore un manque.
-     */
+
     public static function getDispatchComplet($onlyNonValidated = false)
     {
         $donsModel = new \app\models\DashboardModel();

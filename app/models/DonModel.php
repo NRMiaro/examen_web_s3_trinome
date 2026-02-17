@@ -11,9 +11,6 @@ class DonModel
         $this->db = $db;
     }
 
-    /**
-     * Récupère tous les dons (biens + financiers) triés par date
-     */
     public function getAllDons()
     {
         $stmt = $this->db->query("
@@ -37,9 +34,6 @@ class DonModel
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
 
-    /**
-     * Recherche de dons avec filtres (texte + dates)
-     */
     public function searchDons($search = '', $date_debut = '', $date_fin = '')
     {
         $besoinDons = $this->searchDonsBesoin($search, $date_debut, $date_fin);
@@ -52,9 +46,6 @@ class DonModel
         return $all;
     }
 
-    /**
-     * Recherche parmi les dons de biens
-     */
     private function searchDonsBesoin($search, $date_debut, $date_fin)
     {
         $conditions = [];
@@ -92,9 +83,6 @@ class DonModel
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
 
-    /**
-     * Recherche parmi les dons financiers
-     */
     private function searchDonsFinancier($search, $date_debut, $date_fin)
     {
         $conditions = [];
@@ -129,9 +117,7 @@ class DonModel
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
 
-    /**
-     * Récupère tous les besoins (nature + matériel uniquement, pas d'argent)
-     */
+
     public function getAllBesoins()
     {
         $stmt = $this->db->query("
@@ -143,9 +129,7 @@ class DonModel
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
 
-    /**
-     * Récupère les besoins filtrés par type
-     */
+
     public function getBesoinsByType($type_besoin_nom)
     {
         $stmt = $this->db->prepare("
@@ -159,9 +143,6 @@ class DonModel
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
 
-    /**
-     * Insère un don — financier ou de biens selon type_don
-     */
     public function insertDon($data)
     {
         $typeDon = $data['type_don'] ?? '';
@@ -173,9 +154,7 @@ class DonModel
         return $this->insertDonBesoin($data);
     }
 
-    /**
-     * Insère un don financier dans s3_don_financier
-     */
+
     private function insertDonFinancier($data)
     {
         $stmt = $this->db->prepare("
@@ -187,9 +166,7 @@ class DonModel
         ]);
     }
 
-    /**
-     * Insère un don de biens dans s3_don + s3_don_details
-     */
+    
     private function insertDonBesoin($data)
     {
         try {

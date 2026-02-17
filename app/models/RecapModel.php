@@ -6,11 +6,6 @@ use flight\Engine;
 
 class RecapModel
 {
-    /**
-     * Récapitulatif global en montant.
-     * Couvert = validé(dons) + acheté
-     * Restant = total demandé - couvert
-     */
     public static function getRecapMontants(Engine $app): array
     {
         $db = $app->db();
@@ -67,10 +62,7 @@ class RecapModel
             'solde_caisse'             => $soldeCaisse,
         ];
     }
-
-    /**
-     * Détail par besoin : demandé, validé, acheté, couvert, restant.
-     */
+    
     public static function getRecapParBesoin(Engine $app): array
     {
         $sql = "

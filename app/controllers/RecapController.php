@@ -14,9 +14,6 @@ class RecapController
         $this->app = $app;
     }
 
-    /**
-     * Affiche la page de récapitulation
-     */
     public function index(): void
     {
         $recap = RecapModel::getRecapMontants($this->app);
@@ -30,9 +27,6 @@ class RecapController
         ]);
     }
 
-    /**
-     * API pour récupérer les données en Ajax
-     */
     public function apiData(): void
     {
         $recap = RecapModel::getRecapMontants($this->app);
