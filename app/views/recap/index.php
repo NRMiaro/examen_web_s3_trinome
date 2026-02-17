@@ -63,7 +63,7 @@
             <div style="padding: 16px; background: #f8f9fa; border-radius: 8px;">
                 <strong style="color: #666; font-size: 0.9em;">Dons financiers</strong>
                 <p style="font-size: 1.3em; margin: 8px 0 0 0; color: #2196F3;" id="satisfaits-financier">
-                    <?= number_format($recap['besoins_satisfaits_financier'], 0, ',', ' ') ?> Ar
+                    <?= number_format($recap['dons_financiers_total'], 0, ',', ' ') ?> Ar
                 </p>
             </div>
         </div>
@@ -140,7 +140,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     // Mise à jour détail satisfactions
                     document.getElementById('satisfaits-nature').textContent = formatNumber(recap.besoins_satisfaits_nature) + ' Ar';
-                    document.getElementById('satisfaits-financier').textContent = formatNumber(recap.besoins_satisfaits_financier) + ' Ar';
+                    document.getElementById('satisfaits-financier').textContent = formatNumber(recap.dons_financiers_total) + ' Ar';
                     
                     // Mise à jour du tableau
                     updateTable(parBesoin);
