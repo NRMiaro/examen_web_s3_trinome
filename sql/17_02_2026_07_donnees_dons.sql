@@ -48,8 +48,7 @@ SET @don = LAST_INSERT_ID();
 INSERT INTO s3_don_details (id_don, id_besoin, quantite) VALUES 
     (@don, @tole, 50),
     (@don, @bache, 70),
-    (@don, @haricots, 100),
-    (@don, @haricots, 88);
+    (@don, @haricots, 188);
 
 -- Don du 18/02/2026 : Riz 2000 kg + Tôle 300 + Eau 5000 L
 INSERT INTO s3_don (date_don) VALUES ('2026-02-18');

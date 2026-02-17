@@ -12,7 +12,6 @@
 -- =============================================
 -- 1. TYPE DE BESOIN 'argent'
 -- =============================================
-INSERT IGNORE INTO s3_type_besoin (nom) VALUES ('argent');
 
 -- =============================================
 -- 2. COLONNE ORDRE dans s3_besoin_ville_details

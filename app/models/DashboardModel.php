@@ -115,7 +115,7 @@ class DashboardModel
         return $result;
     }
 
-    private static function getUnite(string $nomBesoin): string
+    public static function getUnite(string $nomBesoin): string
     {
         $unites = [
             'Riz' => 'kg',

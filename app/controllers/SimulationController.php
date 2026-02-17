@@ -235,6 +235,8 @@ class SimulationController
             $db->beginTransaction();
             $db->exec("DELETE FROM s3_dispatch_validation");
             $db->exec("DELETE FROM s3_achat");
+            // Supprimer les retraits de caisse (montants négatifs insérés lors de la validation argent)
+            $db->exec("DELETE FROM s3_don_financier WHERE montant < 0");
             $db->commit();
             
             Flight::redirect('/simulation?success=reset_done');

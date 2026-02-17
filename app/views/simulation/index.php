@@ -83,9 +83,9 @@
     <?php foreach ($dons_restants as $nom => $quantite): 
         $quantiteInitiale = $dons_disponibles[$nom] ?? 0;
         $demande = $total_demande[$nom] ?? 0;
-        $icon = ($nom === 'Huile' || $nom === 'Eau') ? 'bi-droplet-fill' : 'bi-gift-fill';
-        $color = ($nom === 'Huile' || $nom === 'Eau') ? 'blue' : 'green';
-        $unite = ($nom === 'Huile' || $nom === 'Eau') ? 'L' : 'kg';
+        $icon = ($nom === 'Argent') ? 'bi-cash-coin' : (($nom === 'Huile' || $nom === 'Eau') ? 'bi-droplet-fill' : 'bi-gift-fill');
+        $color = ($nom === 'Argent') ? 'orange' : (($nom === 'Huile' || $nom === 'Eau') ? 'blue' : 'green');
+        $unite = \app\models\DashboardModel::getUnite($nom);
     ?>
     <div class="stat-card">
         <div class="stat-icon <?= $color ?>"><i class="bi <?= $icon ?>"></i></div>
