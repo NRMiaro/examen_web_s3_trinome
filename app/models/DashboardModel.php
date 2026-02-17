@@ -126,30 +126,28 @@ class DashboardModel
         return $unites[$nomBesoin] ?? 'unités';
     }
 
+    /**
+     * Récupère l'état complet de toutes les demandes (coverage).
+     * Part de s3_besoin_ville_details pour toujours avoir des lignes,
+     * même quand aucune validation/achat n'a été faite.
+     * @return array ['id_besoin_ville_id_besoin' => row, ...]
+     */
     public static function getDispatchValide(): array
     {
         $sql = "
             SELECT 
-                bvd.id_besoin_ville,
-                bvd.id_besoin,
-                b.nom AS besoin_nom,
-                v.nom AS ville_nom,
+                sdv.id_besoin_ville,
+                sdv.id_besoin,
+                sdv.quantite_demandee,
+                sdv.quantite_allouee,
+                sdv.quantite_manquante,
+                sdv.statut,
                 bv.date_besoin,
-                bvd.quantite AS quantite_demandee,
-                COALESCE(dv.quantite_allouee, 0) AS alloue,
-                COALESCE(achats.total_achete, 0) AS achete,
-                GREATEST(0, CAST(bvd.quantite AS SIGNED) - COALESCE(dv.quantite_allouee, 0) - COALESCE(achats.total_achete, 0)) AS manquant,
-                CASE 
-                    WHEN (COALESCE(dv.quantite_allouee, 0) + COALESCE(achats.total_achete, 0)) >= bvd.quantite THEN 'resolved'
-                    WHEN (COALESCE(dv.quantite_allouee, 0) + COALESCE(achats.total_achete, 0)) > 0 THEN 'partial'
-                    ELSE 'unresolved'
-                END AS statut,
-                CASE WHEN bvd.quantite > 0 
-                    THEN LEAST(100, ROUND(((COALESCE(dv.quantite_allouee, 0) + COALESCE(achats.total_achete, 0)) / bvd.quantite) * 100)) 
-                    ELSE 0 
-                END AS pourcentage
-            FROM s3_besoin_ville_details bvd
-            JOIN s3_besoin_ville bv ON bvd.id_besoin_ville = bv.id
+                bv.id_ville,
+                v.nom AS ville_nom,
+                b.nom AS besoin_nom
+            FROM s3_dispatch_validation sdv
+            JOIN s3_besoin_ville bv ON sdv.id_besoin_ville = bv.id
             JOIN s3_ville v ON bv.id_ville = v.id
             JOIN s3_besoin b ON bvd.id_besoin = b.id
             LEFT JOIN s3_dispatch_validation dv 
@@ -163,24 +161,64 @@ class DashboardModel
         ";
         error_log("getDispatchValide: ENTERING");
         $statement = Flight::db()->query($sql);
-        error_log("getDispatchValide: statement type=" . get_class($statement));
-        $rows = $statement->fetchAll(\PDO::FETCH_ASSOC);
-        error_log("getDispatchValide: rows=" . count($rows));
-        if (empty($rows)) {
-            $st2 = Flight::db()->query("SELECT COUNT(*) as c FROM s3_besoin_ville_details");
-            $c = $st2->fetch(\PDO::FETCH_ASSOC);
-            error_log("getDispatchValide: bvd count=" . $c['c']);
-        }
-
-        $index = [];
-        foreach ($rows as $row) {
+        
+        // Récupérer les achats par ville + besoin
+        $achats = self::getAchatsParVilleBesoin();
+        
+        $dispatch = [];
+        
+        while ($row = $statement->fetch(\PDO::FETCH_ASSOC)) {
             $cle = $row['id_besoin_ville'] . '_' . $row['id_besoin'];
-            $index[$cle] = $row;
+            
+            // Quantité allouée par le dispatch validé
+            $alloueDispatch = (int) $row['quantite_allouee'];
+            
+            // Quantité achetée pour cette ville + ce besoin
+            $cleAchat = $row['id_ville'] . '_' . $row['id_besoin'];
+            $achete = $achats[$cleAchat] ?? 0;
+            
+            // Total réellement couvert = dispatch + achats
+            $totalCouvert = $alloueDispatch + $achete;
+            $quantiteDemandee = (int) $row['quantite_demandee'];
+            $manquant = max(0, $quantiteDemandee - $totalCouvert);
+            
+            // Recalculer le statut en tenant compte des achats
+            if ($manquant === 0) {
+                $statut = 'resolved';
+            } elseif ($totalCouvert > 0) {
+                $statut = 'partial';
+            } else {
+                $statut = 'unresolved';
+            }
+            
+            $pourcentage = $quantiteDemandee > 0 
+                ? min(100, round(($totalCouvert / $quantiteDemandee) * 100))
+                : 0;
+            
+            $dispatch[$cle] = [
+                'id_besoin_ville' => $row['id_besoin_ville'],
+                'id_besoin' => $row['id_besoin'],
+                'besoin_nom' => $row['besoin_nom'],
+                'ville_nom' => $row['ville_nom'],
+                'date_besoin' => $row['date_besoin'],
+                'quantite_demandee' => $quantiteDemandee,
+                'alloue' => $totalCouvert,
+                'alloue_dispatch' => $alloueDispatch,
+                'alloue_achat' => $achete,
+                'manquant' => $manquant,
+                'statut' => $statut,
+                'pourcentage' => $pourcentage
+            ];
         }
-        return $index;
+        
+        return $dispatch;
     }
 
-    public static function getDonsMontantsValidees(): array
+    /**
+     * Récupère les quantités achetées groupées par ville + besoin
+     * @return array ['id_ville_id_besoin' => quantite, ...]
+     */
+    public static function getAchatsParVilleBesoin(): array
     {
         $sql = "
             SELECT b.nom AS besoin_nom, SUM(dv.quantite_allouee) AS total_alloue
