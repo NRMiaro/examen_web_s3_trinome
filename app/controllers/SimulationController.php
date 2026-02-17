@@ -23,16 +23,7 @@ class SimulationController
         $total_demande = DashboardModel::getTotalDemandeParBesoin();
         
         // Couverture réelle de TOUTES les demandes (validé + acheté)
-        // Même source que le Dashboard, pour garantir zéro trou
         $fullCoverage = DashboardModel::getDispatchValide();
-        
-        // Identifier les produits NON couverts à 100% (= tout sauf resolved)
-        $nonResolvedKeys = [];
-        foreach ($fullCoverage as $cle => $item) {
-            if ($item['statut'] !== 'resolved') {
-                $nonResolvedKeys[$cle] = true;
-            }
-        }
         
         // Simuler le dispatch théorique avec les dons restants
         $dispatch_data = DispatchModel::getDispatchComplet(true);
@@ -57,6 +48,10 @@ class SimulationController
         }
         
         // Filtrer besoinsVilles : garder seulement les produits NON 100% couverts
+        // Un produit est "non couvert" si :
+        //   - il n'a PAS d'entrée dans fullCoverage (jamais validé) → à afficher
+        //   - il a une entrée mais statut !== 'resolved' → à afficher
+        //   - il a statut 'resolved' → déjà complété, ne PAS afficher
         $besoinsVillesToutes = DashboardModel::getBesoinsParVille();
         $besoinsVilles = [];
         foreach ($besoinsVillesToutes as $villeData) {
@@ -65,7 +60,9 @@ class SimulationController
                 $produitsFiltres = [];
                 foreach ($demande['produits'] as $produit) {
                     $key = $demande['id_besoin_ville'] . '_' . $produit['id_besoin'];
-                    if (isset($nonResolvedKeys[$key])) {
+                    // Garder le produit s'il n'est PAS resolved (ou s'il n'existe pas dans coverage)
+                    $covStatut = $fullCoverage[$key]['statut'] ?? null;
+                    if ($covStatut !== 'resolved') {
                         $produitsFiltres[] = $produit;
                     }
                 }
