@@ -22,14 +22,25 @@ class SimulationController
         $liste_villes = DashboardModel::getListeVilles();
         $total_demande = DashboardModel::getTotalDemandeParBesoin();
         
-        // Simuler le dispatch SEULEMENT pour les demandes avec manque restant
-        // (non validées + validées partiellement) avec le stock restant
+        // Couverture réelle de TOUTES les demandes (validé + acheté)
+        // Même source que le Dashboard, pour garantir zéro trou
+        $fullCoverage = DashboardModel::getDispatchValide();
+        
+        // Identifier les produits NON couverts à 100% (= tout sauf resolved)
+        $nonResolvedKeys = [];
+        foreach ($fullCoverage as $cle => $item) {
+            if ($item['statut'] !== 'resolved') {
+                $nonResolvedKeys[$cle] = true;
+            }
+        }
+        
+        // Simuler le dispatch théorique avec les dons restants
         $dispatch_data = DispatchModel::getDispatchComplet(true);
         
         // Stock disponible pour la simulation (après soustraction des validations)
         $dons_disponibles = $dispatch_data['dons'];
         
-        // Créer un index pour accéder rapidement au statut de dispatch
+        // Créer un index pour accéder rapidement au statut de dispatch simulé
         $dispatchIndex = [];
         foreach ($dispatch_data['dispatch'] as $item) {
             $cle = $item['id_besoin_ville'] . '_' . $item['id_besoin'];
@@ -45,21 +56,21 @@ class SimulationController
             }
         }
         
-        // Filtrer besoinsVilles pour ne garder que les demandes non validées
+        // Filtrer besoinsVilles : garder seulement les produits NON 100% couverts
         $besoinsVillesToutes = DashboardModel::getBesoinsParVille();
-        
-        // Collecter les id_besoin_ville présents dans le dispatch simulé
-        $besoinVilleIdsNonValides = [];
-        foreach ($dispatch_data['demandes'] as $demande) {
-            $besoinVilleIdsNonValides[$demande['id_besoin_ville']] = true;
-        }
-        
-        // Filtrer : garder seulement les villes/demandes qui sont dans la simulation
         $besoinsVilles = [];
         foreach ($besoinsVillesToutes as $villeData) {
             $demandesFiltrees = [];
             foreach ($villeData['demandes'] as $demande) {
-                if (isset($besoinVilleIdsNonValides[$demande['id_besoin_ville']])) {
+                $produitsFiltres = [];
+                foreach ($demande['produits'] as $produit) {
+                    $key = $demande['id_besoin_ville'] . '_' . $produit['id_besoin'];
+                    if (isset($nonResolvedKeys[$key])) {
+                        $produitsFiltres[] = $produit;
+                    }
+                }
+                if (!empty($produitsFiltres)) {
+                    $demande['produits'] = $produitsFiltres;
                     $demandesFiltrees[] = $demande;
                 }
             }
@@ -79,6 +90,7 @@ class SimulationController
             'besoinsVilles'    => $besoinsVilles,
             'total_demande'    => $total_demande,
             'dispatch'         => $dispatchIndex,
+            'coverage'         => $fullCoverage,
         ]);
     }
 
@@ -163,8 +175,8 @@ class SimulationController
             // Valider la transaction
             $db->commit();
             
-            // Rediriger vers le tableau de bord avec message de succès
-            Flight::redirect(BASE_URL . '/?success=dispatch_valide');
+            // Rediriger vers la simulation pour voir les données mises à jour
+            Flight::redirect('/simulation?success=dispatch_valide');
             
         } catch (\Exception $e) {
             // Annuler la transaction en cas d'erreur

@@ -64,6 +64,11 @@ class DispatchModel
      * Pour les demandes déjà partiellement validées, la quantite_demandee
      * est ajustée à la quantite_manquante restante.
      */
+    /**
+     * Retourne les demandes qui ont encore un manque RÉEL :
+     * manque = demandé - alloué(validé) - acheté
+     * Exclut les demandes entièrement couvertes par validation + achats.
+     */
     public static function getDemandesAvecManque()
     {
         $sql = "
@@ -74,18 +79,27 @@ class DispatchModel
                 v.nom AS ville_nom,
                 b.id AS id_besoin,
                 b.nom AS besoin_nom,
-                CASE 
-                    WHEN sdv.id IS NOT NULL THEN sdv.quantite_manquante
-                    ELSE bvd.quantite
-                END AS quantite_demandee
+                GREATEST(0,
+                    CASE 
+                        WHEN sdv.id IS NOT NULL THEN sdv.quantite_manquante
+                        ELSE bvd.quantite
+                    END
+                    - COALESCE(achats.total_achete, 0)
+                ) AS quantite_demandee
             FROM s3_besoin_ville bv
             JOIN s3_ville v ON bv.id_ville = v.id
             JOIN s3_besoin_ville_details bvd ON bvd.id_besoin_ville = bv.id
             JOIN s3_besoin b ON bvd.id_besoin = b.id
             LEFT JOIN s3_dispatch_validation sdv 
                 ON sdv.id_besoin_ville = bv.id AND sdv.id_besoin = b.id
+            LEFT JOIN (
+                SELECT id_besoin, id_ville, SUM(quantite) AS total_achete
+                FROM s3_achat
+                GROUP BY id_besoin, id_ville
+            ) achats ON achats.id_besoin = b.id AND achats.id_ville = bv.id_ville
             WHERE sdv.id IS NULL 
                OR sdv.quantite_manquante > 0
+            HAVING quantite_demandee > 0
             ORDER BY b.nom, bv.date_besoin, v.nom
         ";
         $statement = Flight::db()->query($sql);

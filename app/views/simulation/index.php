@@ -1,10 +1,16 @@
 <?php include __DIR__ . '/../include/header.php'; ?>
 
+<?php if (isset($_GET['success']) && $_GET['success'] === 'dispatch_valide'): ?>
+    <div style="background: #d4edda; border: 1px solid #c3e6cb; border-left: 4px solid #28a745; padding: 12px 16px; border-radius: 6px; margin-bottom: 20px; color: #155724;">
+        <i class="bi bi-check-circle-fill"></i>
+        <strong>Succès !</strong> Le dispatch a été validé. Cliquez sur <strong>"Actualiser la simulation"</strong> pour recalculer avec les besoins restants.
+    </div>
+<?php endif; ?>
+
 <?php if (isset($_GET['error']) && $_GET['error'] === 'validation_failed'): ?>
-    <div class="alert alert-danger alert-dismissible fade show" role="alert" style="margin-bottom: 20px;">
+    <div style="background: #fdecea; border: 1px solid #f5c6cb; border-left: 4px solid #dc3545; padding: 12px 16px; border-radius: 6px; margin-bottom: 20px; color: #721c24;">
         <i class="bi bi-exclamation-triangle-fill"></i>
         <strong>Erreur :</strong> La validation du dispatch a échoué. Veuillez réessayer.
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
 <?php endif; ?>
 
@@ -16,16 +22,20 @@
             <p>Prévisualisation de l'allocation des dons avant validation</p>
         </div>
     </div>
-    <?php if (!empty($besoinsVilles)): ?>
-    <div class="page-header-right">
+    <div class="page-header-right" style="display: flex; gap: 10px; align-items: center;">
+        <a href="<?= BASE_URL ?>/simulation" class="btn" style="padding: 10px 20px; font-size: 1em; border-radius: 6px; background-color: #007bff; color: white; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; text-decoration: none;">
+            <i class="bi bi-arrow-clockwise"></i>
+            Actualiser la simulation
+        </a>
+        <?php if (!empty($besoinsVilles)): ?>
         <form method="POST" action="<?= BASE_URL ?>/simulation/valider" style="display: inline;">
             <button type="submit" class="btn btn-success" style="padding: 10px 20px; font-size: 1em; border-radius: 6px; background-color: #28a745; color: white; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 8px;">
                 <i class="bi bi-check-circle"></i>
                 Valider le Dispatch
             </button>
         </form>
+        <?php endif; ?>
     </div>
-    <?php endif; ?>
 </div>
 
 <!-- Dons disponibles -->
@@ -76,22 +86,32 @@
         
         <?php foreach ($demande['produits'] as $produit): ?>
             <?php
-                // Créer la clé unique pour ce produit
+                // Clé unique pour ce produit
                 $cle = $demande['id_besoin_ville'] . '_' . $produit['id_besoin'];
                 
-                // Récupérer le statut de dispatch pour ce produit spécifique
-                $dispatchStatus = $dispatch[$cle] ?? null;
+                // Couverture actuelle réelle (validé + acheté)
+                $cov = $coverage[$cle] ?? null;
+                $dejaAlloue = (int) ($cov['alloue'] ?? 0);
+                $dejaAchete = (int) ($cov['achete'] ?? 0);
+                $dejaCouvert = $dejaAlloue + $dejaAchete;
+                $resteManquant = max(0, $produit['quantite'] - $dejaCouvert);
+                $pourcentageCouvert = $produit['quantite'] > 0 
+                    ? min(100, round(($dejaCouvert / $produit['quantite']) * 100)) 
+                    : 0;
                 
-                if ($dispatchStatus) {
-                    $statut = $dispatchStatus['statut'];
-                    $alloue = $dispatchStatus['alloue'];
-                    $manquant = $dispatchStatus['manquant'];
-                    $pourcentage = $dispatchStatus['pourcentage'];
+                // Simulation théorique (ce que les dons restants pourraient couvrir)
+                $simStatus = $dispatch[$cle] ?? null;
+                $simAlloue = (int) ($simStatus['alloue'] ?? 0);
+                
+                // Statut global
+                if ($dejaCouvert === 0 && $simAlloue === 0) {
+                    $statusColor = '#F44336'; $statusText = 'Non couvert';
+                } elseif ($resteManquant > 0 && $simAlloue > 0) {
+                    $statusColor = '#FF9800'; $statusText = 'Partiel';
+                } elseif ($resteManquant > 0) {
+                    $statusColor = '#F44336'; $statusText = 'Insuffisant';
                 } else {
-                    $statut = 'unresolved';
-                    $alloue = 0;
-                    $manquant = $produit['quantite'];
-                    $pourcentage = 0;
+                    $statusColor = '#4CAF50'; $statusText = 'Couvert par simulation';
                 }
             ?>
         <div class="card" style="margin-bottom: 12px;">
@@ -100,39 +120,58 @@
                     <h4 style="margin: 0;"><?= htmlspecialchars($produit['nom']) ?></h4>
                     <small class="text-muted">Type: <?= htmlspecialchars($produit['type']) ?></small>
                 </div>
+                <div>
+                    <span style="display: inline-block; padding: 4px 10px; border-radius: 3px; font-size: 0.85em; font-weight: 600; background-color: <?= $statusColor ?>20; color: <?= $statusColor ?>; border-left: 3px solid <?= $statusColor ?>;">
+                        <?= $statusText ?> (<?= $pourcentageCouvert ?>%)
+                    </span>
+                </div>
             </div>
             <div class="card-body">
-                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr 1fr; gap: 12px;">
                     <div>
                         <strong style="font-size: 0.85em; color: #666;">DEMANDÉ</strong>
-                        <p style="font-size: 1.2em; margin: 8px 0 0 0; color: var(--color-primary);">
+                        <p style="font-size: 1.1em; margin: 6px 0 0 0; color: var(--color-primary);">
                             <?= number_format($produit['quantite'], 0, ',', ' ') ?> <span style="font-size: 0.8em; color: #999;"><?= $produit['unite'] ?></span>
                         </p>
                     </div>
                     <div>
-                        <strong style="font-size: 0.85em; color: #666;">ALLOUÉ</strong>
-                        <p style="font-size: 1.2em; margin: 8px 0 0 0; color: #4CAF50;">
-                            <?= number_format($alloue, 0, ',', ' ') ?> <span style="font-size: 0.8em; color: #999;"><?= $produit['unite'] ?></span>
+                        <strong style="font-size: 0.85em; color: #666;">VALIDÉ (dons)</strong>
+                        <p style="font-size: 1.1em; margin: 6px 0 0 0; color: #4CAF50;">
+                            <?= number_format($dejaAlloue, 0, ',', ' ') ?> <span style="font-size: 0.8em; color: #999;"><?= $produit['unite'] ?></span>
                         </p>
                     </div>
                     <div>
-                        <strong style="font-size: 0.85em; color: #666;">STATUT</strong>
-                        <p style="margin: 8px 0 0 0;">
-                            <?php
-                            $statusColor = '#4CAF50';
-                            $statusText = 'Complété';
-                            if ($statut === 'partial') {
-                                $statusColor = '#FF9800';
-                                $statusText = 'Partiel';
-                            } elseif ($statut === 'unresolved') {
-                                $statusColor = '#F44336';
-                                $statusText = 'Invalide';
-                            }
-                            ?>
-                            <span style="display: inline-block; padding: 4px 10px; border-radius: 3px; font-size: 0.85em; font-weight: 600; background-color: <?= $statusColor ?>20; color: <?= $statusColor ?>; border-left: 3px solid <?= $statusColor ?>;">
-                                <?= $statusText ?>
-                            </span>
+                        <strong style="font-size: 0.85em; color: #666;">ACHETÉ</strong>
+                        <p style="font-size: 1.1em; margin: 6px 0 0 0; color: #FF9800;">
+                            <?= number_format($dejaAchete, 0, ',', ' ') ?> <span style="font-size: 0.8em; color: #999;"><?= $produit['unite'] ?></span>
                         </p>
+                    </div>
+                    <div>
+                        <strong style="font-size: 0.85em; color: #666;">RESTE</strong>
+                        <p style="font-size: 1.1em; margin: 6px 0 0 0; color: #F44336; font-weight: 600;">
+                            <?= number_format($resteManquant, 0, ',', ' ') ?> <span style="font-size: 0.8em; color: #999;"><?= $produit['unite'] ?></span>
+                        </p>
+                    </div>
+                    <div>
+                        <strong style="font-size: 0.85em; color: #666;">SIMULATION</strong>
+                        <p style="font-size: 1.1em; margin: 6px 0 0 0; color: #2196F3;">
+                            <?php if ($simAlloue > 0): ?>
+                                +<?= number_format($simAlloue, 0, ',', ' ') ?> <span style="font-size: 0.8em; color: #999;"><?= $produit['unite'] ?></span>
+                            <?php else: ?>
+                                <span style="color: #999;">—</span>
+                            <?php endif; ?>
+                        </p>
+                    </div>
+                </div>
+                <!-- Barre de progression -->
+                <div style="margin-top: 12px; background: #e9ecef; border-radius: 4px; height: 8px; overflow: hidden;">
+                    <?php $pctValide = $produit['quantite'] > 0 ? min(100, round(($dejaAlloue / $produit['quantite']) * 100)) : 0; ?>
+                    <?php $pctAchete = $produit['quantite'] > 0 ? min(100 - $pctValide, round(($dejaAchete / $produit['quantite']) * 100)) : 0; ?>
+                    <?php $pctSim = $produit['quantite'] > 0 ? min(100 - $pctValide - $pctAchete, round(($simAlloue / $produit['quantite']) * 100)) : 0; ?>
+                    <div style="display: flex; height: 100%;">
+                        <div style="width: <?= $pctValide ?>%; background: #4CAF50;" title="Validé"></div>
+                        <div style="width: <?= $pctAchete ?>%; background: #FF9800;" title="Acheté"></div>
+                        <div style="width: <?= $pctSim ?>%; background: #2196F3; opacity: 0.6;" title="Simulation"></div>
                     </div>
                 </div>
             </div>

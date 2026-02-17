@@ -51,60 +51,94 @@ class AchatModel
     }
 
     /**
-     * Récupère les besoins restants (manquants) par ville depuis le dispatch
-     * Ce sont les besoins en nature/matériel non couverts par les dons
+     * Récupère les besoins restants (manquants) par ville depuis les données VALIDÉES.
+     * Formule : Manquant = Demandé - Alloué(validé) - Acheté
+     * Ne retourne que les lignes où Manquant > 0.
      */
     public function getBesoinsRestants()
     {
-        // Utiliser le DispatchModel pour obtenir les besoins non résolus
-        $dispatch_data = \app\models\DispatchModel::getDispatchComplet();
+        $sql = "
+            SELECT 
+                bvd.id_besoin_ville,
+                bvd.id_besoin,
+                b.nom AS besoin_nom,
+                b.prix AS prix_unitaire,
+                tb.nom AS type_nom,
+                v.nom AS ville_nom,
+                v.id AS id_ville,
+                bvd.quantite AS quantite_demandee,
+                COALESCE(dv.quantite_allouee, 0) AS alloue,
+                COALESCE(achats.total_achete, 0) AS deja_achete,
+                (bvd.quantite - COALESCE(dv.quantite_allouee, 0) - COALESCE(achats.total_achete, 0)) AS manquant
+            FROM s3_besoin_ville_details bvd
+            JOIN s3_besoin_ville bv ON bvd.id_besoin_ville = bv.id
+            JOIN s3_ville v ON bv.id_ville = v.id
+            JOIN s3_besoin b ON bvd.id_besoin = b.id
+            JOIN s3_type_besoin tb ON b.id_type_besoin = tb.id
+            LEFT JOIN s3_dispatch_validation dv 
+                ON dv.id_besoin_ville = bvd.id_besoin_ville 
+                AND dv.id_besoin = bvd.id_besoin
+            LEFT JOIN (
+                SELECT id_besoin, id_ville, SUM(quantite) AS total_achete
+                FROM s3_achat
+                GROUP BY id_besoin, id_ville
+            ) achats 
+                ON achats.id_besoin = bvd.id_besoin 
+                AND achats.id_ville = bv.id_ville
+            HAVING manquant > 0
+            ORDER BY b.nom, bv.date_besoin, v.nom
+        ";
+        
+        $stmt = $this->db->query($sql);
+        $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         
         $besoinsRestants = [];
-        foreach ($dispatch_data['dispatch'] as $cle => $item) {
-            if ($item['manquant'] > 0) {
-                // Récupérer le prix et type du besoin
-                $stmtType = $this->db->prepare("
-                    SELECT tb.nom AS type_nom, b.prix 
-                    FROM s3_besoin b 
-                    JOIN s3_type_besoin tb ON b.id_type_besoin = tb.id 
-                    WHERE b.id = :id
-                ");
-                $stmtType->execute([':id' => $item['id_besoin']]);
-                $typeInfo = $stmtType->fetch(\PDO::FETCH_ASSOC);
-                
-                if ($typeInfo) {
-                    $besoinsRestants[] = [
-                        'id_besoin' => $item['id_besoin'],
-                        'id_besoin_ville' => $item['id_besoin_ville'],
-                        'besoin_nom' => $item['besoin_nom'],
-                        'ville_nom' => $item['ville_nom'],
-                        'quantite_demandee' => $item['quantite_demandee'],
-                        'alloue' => $item['alloue'],
-                        'manquant' => $item['manquant'],
-                        'prix_unitaire' => (int) $typeInfo['prix'],
-                        'type_nom' => $typeInfo['type_nom'],
-                    ];
-                }
-            }
+        foreach ($rows as $row) {
+            $besoinsRestants[] = [
+                'id_besoin'         => (int) $row['id_besoin'],
+                'id_besoin_ville'   => (int) $row['id_besoin_ville'],
+                'id_ville'          => (int) $row['id_ville'],
+                'besoin_nom'        => $row['besoin_nom'],
+                'ville_nom'         => $row['ville_nom'],
+                'quantite_demandee' => (int) $row['quantite_demandee'],
+                'alloue'            => (int) $row['alloue'],
+                'deja_achete'       => (int) $row['deja_achete'],
+                'manquant'          => (int) $row['manquant'],
+                'prix_unitaire'     => (int) $row['prix_unitaire'],
+                'type_nom'          => $row['type_nom'],
+            ];
         }
         
         return $besoinsRestants;
     }
 
     /**
-     * Vérifie si un besoin est déjà couvert par les dons restants (pas d'achat nécessaire)
+     * Vérifie si un besoin est encore couvert par les dons restants après validation.
+     * Si les dons non-alloués (après validation) suffisent, pas besoin d'acheter.
      */
     public function besoinDejaDisponible($id_besoin, $quantite)
     {
+        // Dons bruts par besoin
         $dons = \app\models\DashboardModel::getDonsObtenus();
-        $dispatch_data = \app\models\DispatchModel::getDispatchComplet();
         
-        // Calculer les dons restants (non alloués)
-        $donsRestants = $dons;
-        foreach ($dispatch_data['dispatch'] as $item) {
-            $besoinNom = $item['besoin_nom'];
-            if (isset($donsRestants[$besoinNom])) {
-                $donsRestants[$besoinNom] -= $item['alloue'];
+        // Quantités déjà validées (allouées) par besoin
+        $stmtValidees = $this->db->query("
+            SELECT b.nom AS besoin_nom, SUM(dv.quantite_allouee) AS total_alloue
+            FROM s3_dispatch_validation dv
+            JOIN s3_besoin b ON dv.id_besoin = b.id
+            GROUP BY b.id, b.nom
+        ");
+        $validees = [];
+        while ($row = $stmtValidees->fetch(\PDO::FETCH_ASSOC)) {
+            $validees[$row['besoin_nom']] = (int) $row['total_alloue'];
+        }
+
+        // Dons restants = dons bruts - validés
+        $donsRestants = [];
+        foreach ($dons as $nom => $qte) {
+            $donsRestants[$nom] = $qte - ($validees[$nom] ?? 0);
+            if ($donsRestants[$nom] < 0) {
+                $donsRestants[$nom] = 0;
             }
         }
 

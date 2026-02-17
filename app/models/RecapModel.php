@@ -7,71 +7,69 @@ use flight\Engine;
 class RecapModel
 {
     /**
-     * Récupère le récapitulatif des besoins en montant
-     * - besoins_totaux: somme (quantite demandée × prix unitaire)
-     * - besoins_satisfaits: somme des quantités VALIDÉES (depuis s3_dispatch_validation)
-     * - besoins_restants: somme des (montant_demande - montant_validé) pour chaque besoin
-     * 
-     * Formule simple: besoins_satisfaits + besoins_restants = besoins_totaux
-     * 
-     * @param Engine $app
-     * @return array
+     * Récapitulatif global en montant.
+     * Couvert = validé(dons) + acheté
+     * Restant = total demandé - couvert
      */
     public static function getRecapMontants(Engine $app): array
     {
-        // Besoins totaux en montant (toutes les demandes des villes)
-        $sqlTotaux = "
-            SELECT COALESCE(SUM(bvd.quantite * b.prix), 0) AS montant_total
+        $db = $app->db();
+
+        // Besoins totaux en montant
+        $montantTotal = (int) $db->query("
+            SELECT COALESCE(SUM(bvd.quantite * b.prix), 0)
             FROM s3_besoin_ville_details bvd
             JOIN s3_besoin b ON bvd.id_besoin = b.id
-        ";
-        $stmtTotaux = $app->db()->query($sqlTotaux);
-        $montantTotal = (int) $stmtTotaux->fetchColumn();
+        ")->fetchColumn();
 
-        // Besoins satisfaits en montant (UNIQUEMENT VALIDÉS)
-        $sqlSatisfaits = "
-            SELECT COALESCE(SUM(dv.quantite_allouee * b.prix), 0) AS montant_satisfait
+        // Montant couvert par dons validés
+        $montantValide = (int) $db->query("
+            SELECT COALESCE(SUM(dv.quantite_allouee * b.prix), 0)
             FROM s3_dispatch_validation dv
             JOIN s3_besoin b ON dv.id_besoin = b.id
-        ";
-        $stmtSatisfaits = $app->db()->query($sqlSatisfaits);
-        $montantSatisfaitNature = (int) $stmtSatisfaits->fetchColumn();
+        ")->fetchColumn();
 
-        // Besoins RESTANTS = somme des (demande - validée) pour chaque besoin
-        // Formule: besoins_totaux - besoins_satisfaits
-        $montantRestant = max(0, $montantTotal - $montantSatisfaitNature);
+        // Montant couvert par achats (quantite × prix du besoin, pas le total achat avec frais)
+        $montantAchete = (int) $db->query("
+            SELECT COALESCE(SUM(a.quantite * b.prix), 0)
+            FROM s3_achat a
+            JOIN s3_besoin b ON a.id_besoin = b.id
+        ")->fetchColumn();
 
-        // Dons financiers (informationnel)
-        $sqlFinancier = "
-            SELECT COALESCE(SUM(df.montant), 0) AS montant_financier
-            FROM s3_don_financier df
-        ";
-        $stmtFinancier = $app->db()->query($sqlFinancier);
-        $montantFinancierBrut = (int) $stmtFinancier->fetchColumn();
+        // Total dépensé en achats (avec frais)
+        $totalDepenseAchats = (int) $db->query("
+            SELECT COALESCE(SUM(total), 0) FROM s3_achat
+        ")->fetchColumn();
 
-        // Pourcentage de satisfaction (plafonné à 100%)
-        $pourcentage = $montantTotal > 0 
-            ? min(100, round(($montantSatisfaitNature / $montantTotal) * 100, 1))
+        // Dons financiers
+        $montantFinancier = (int) $db->query("
+            SELECT COALESCE(SUM(montant), 0) FROM s3_don_financier
+        ")->fetchColumn();
+
+        // Solde caisse
+        $soldeCaisse = $montantFinancier - $totalDepenseAchats;
+
+        $montantCouvert = $montantValide + $montantAchete;
+        $montantRestant = max(0, $montantTotal - $montantCouvert);
+        $pourcentage = $montantTotal > 0
+            ? min(100, round(($montantCouvert / $montantTotal) * 100, 1))
             : 0;
 
         return [
-            'besoins_totaux' => $montantTotal,
-            'besoins_satisfaits' => $montantSatisfaitNature,
-            'besoins_satisfaits_nature' => $montantSatisfaitNature,
-            'besoins_satisfaits_financier' => 0, // Les dons financiers sont informationnels
-            'besoins_restants' => $montantRestant,
+            'besoins_totaux'           => $montantTotal,
+            'montant_valide'           => $montantValide,
+            'montant_achete'           => $montantAchete,
+            'besoins_satisfaits'       => $montantCouvert,
+            'besoins_restants'         => $montantRestant,
             'pourcentage_satisfaction' => $pourcentage,
-            // Infos supplémentaires pour transparence
-            'dons_financiers_total' => $montantFinancierBrut
+            'dons_financiers_total'    => $montantFinancier,
+            'total_depense_achats'     => $totalDepenseAchats,
+            'solde_caisse'             => $soldeCaisse,
         ];
     }
 
     /**
-     * Récupère le détail par type de besoin
-     * Les quantités satisfaites viennent de s3_dispatch_validation (validées uniquement)
-     * 
-     * @param Engine $app
-     * @return array
+     * Détail par besoin : demandé, validé, acheté, couvert, restant.
      */
     public static function getRecapParBesoin(Engine $app): array
     {
@@ -82,8 +80,10 @@ class RecapModel
                 b.prix,
                 COALESCE(demandes.total_demande, 0) AS quantite_demandee,
                 COALESCE(valide.total_valide, 0) AS quantite_validee,
+                COALESCE(achats.total_achete, 0) AS quantite_achetee,
                 COALESCE(demandes.total_demande, 0) * b.prix AS montant_demande,
-                COALESCE(valide.total_valide, 0) * b.prix AS montant_valide
+                COALESCE(valide.total_valide, 0) * b.prix AS montant_valide,
+                COALESCE(achats.total_achete, 0) * b.prix AS montant_achete
             FROM s3_besoin b
             LEFT JOIN (
                 SELECT id_besoin, SUM(quantite) AS total_demande
@@ -95,25 +95,50 @@ class RecapModel
                 FROM s3_dispatch_validation
                 GROUP BY id_besoin
             ) valide ON b.id = valide.id_besoin
+            LEFT JOIN (
+                SELECT id_besoin, SUM(quantite) AS total_achete
+                FROM s3_achat
+                GROUP BY id_besoin
+            ) achats ON b.id = achats.id_besoin
+            WHERE COALESCE(demandes.total_demande, 0) > 0
             ORDER BY b.nom
         ";
-        
+
         $statement = $app->db()->query($sql);
         $result = [];
-        
+
         while ($row = $statement->fetch(\PDO::FETCH_ASSOC)) {
-            $montantDemande = (int) $row['montant_demande'];
-            $montantValide = (int) $row['montant_valide'];
-            
-            $row['quantite_donnee'] = (int) $row['quantite_validee'];
-            $row['montant_donne'] = $montantValide;
-            $row['montant_restant'] = max(0, $montantDemande - $montantValide);
-            $row['pourcentage'] = $montantDemande > 0 
-                ? min(100, round(($montantValide / $montantDemande) * 100, 1))
+            $qDemande   = (int) $row['quantite_demandee'];
+            $qValide    = (int) $row['quantite_validee'];
+            $qAchete    = (int) $row['quantite_achetee'];
+            $qCouvert   = $qValide + $qAchete;
+            $qRestant   = max(0, $qDemande - $qCouvert);
+            $mDemande   = (int) $row['montant_demande'];
+            $mValide    = (int) $row['montant_valide'];
+            $mAchete    = (int) $row['montant_achete'];
+            $mCouvert   = $mValide + $mAchete;
+            $mRestant   = max(0, $mDemande - $mCouvert);
+            $pourcentage = $mDemande > 0
+                ? min(100, round(($mCouvert / $mDemande) * 100, 1))
                 : 0;
-            $result[] = $row;
+
+            $result[] = [
+                'nom'              => $row['nom'],
+                'prix'             => (int) $row['prix'],
+                'quantite_demandee'=> $qDemande,
+                'quantite_validee' => $qValide,
+                'quantite_achetee' => $qAchete,
+                'quantite_couverte'=> $qCouvert,
+                'quantite_restante'=> $qRestant,
+                'montant_demande'  => $mDemande,
+                'montant_valide'   => $mValide,
+                'montant_achete'   => $mAchete,
+                'montant_couvert'  => $mCouvert,
+                'montant_restant'  => $mRestant,
+                'pourcentage'      => $pourcentage,
+            ];
         }
-        
+
         return $result;
     }
 }

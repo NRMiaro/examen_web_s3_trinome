@@ -49,6 +49,7 @@
                             <th>Ville</th>
                             <th>Demandé</th>
                             <th>Alloué (dons)</th>
+                            <th>Déjà acheté</th>
                             <th>Manquant</th>
                             <th>Prix unit.</th>
                             <th>Coût estimé (+ <?= $frais_pourcent ?>%)</th>
@@ -66,21 +67,14 @@
                             <td><?= htmlspecialchars($besoin['ville_nom']) ?></td>
                             <td><?= number_format($besoin['quantite_demandee'], 0, ',', ' ') ?></td>
                             <td><?= number_format($besoin['alloue'], 0, ',', ' ') ?></td>
+                            <td><?= number_format($besoin['deja_achete'] ?? 0, 0, ',', ' ') ?></td>
                             <td><strong style="color: #dc3545;"><?= number_format($besoin['manquant'], 0, ',', ' ') ?></strong></td>
                             <td><?= number_format($besoin['prix_unitaire'], 0, ',', ' ') ?> Ar</td>
                             <td><strong><?= number_format($cout_total, 0, ',', ' ') ?> Ar</strong></td>
                             <td>
                                 <form method="POST" action="<?= BASE_URL ?>/achats" style="display: flex; gap: 6px; align-items: center;">
                                     <input type="hidden" name="id_besoin" value="<?= $besoin['id_besoin'] ?>">
-                                    <input type="hidden" name="id_ville" value="<?php
-                                        // Trouver l'id de la ville
-                                        foreach ($villes as $v) {
-                                            if ($v['nom'] === $besoin['ville_nom']) {
-                                                echo $v['id'];
-                                                break;
-                                            }
-                                        }
-                                    ?>">
+                                    <input type="hidden" name="id_ville" value="<?= $besoin['id_ville'] ?>">
                                     <input type="hidden" name="prix_unitaire" value="<?= $besoin['prix_unitaire'] ?>">
                                     <input type="number" name="quantite" value="<?= $besoin['manquant'] ?>" min="1" max="<?= $besoin['manquant'] ?>" class="form-input" style="width: 80px; padding: 4px 8px; font-size: 0.85rem;">
                                     <button type="submit" class="btn btn-sm btn-success btn-achat-confirm" title="Acheter">

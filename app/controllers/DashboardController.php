@@ -20,11 +20,34 @@ class DashboardController
         // Récupérer les données depuis le Model
         $liste_villes = DashboardModel::getListeVilles();
         $dons_disponibles = DashboardModel::getDonsObtenus();
-        $besoinsVilles = DashboardModel::getBesoinsParVille();
+        $besoinsVillesToutes = DashboardModel::getBesoinsParVille();
         $total_demande = DashboardModel::getTotalDemandeParBesoin();
         
-        // Récupérer le dispatch VALIDÉ depuis la BD (inclut les achats dans le calcul)
+        // Récupérer le dispatch VALIDÉ depuis la BD
         $dispatchIndex = DashboardModel::getDispatchValide();
+        
+        // Filtrer : ne garder que les demandes/produits couverts à 100% (resolved)
+        $besoinsVilles = [];
+        foreach ($besoinsVillesToutes as $villeData) {
+            $demandesFiltrees = [];
+            foreach ($villeData['demandes'] as $demande) {
+                $produitsFiltres = [];
+                foreach ($demande['produits'] as $produit) {
+                    $cle = $demande['id_besoin_ville'] . '_' . $produit['id_besoin'];
+                    if (isset($dispatchIndex[$cle]) && $dispatchIndex[$cle]['statut'] === 'resolved') {
+                        $produitsFiltres[] = $produit;
+                    }
+                }
+                if (!empty($produitsFiltres)) {
+                    $demande['produits'] = $produitsFiltres;
+                    $demandesFiltrees[] = $demande;
+                }
+            }
+            if (!empty($demandesFiltrees)) {
+                $villeData['demandes'] = $demandesFiltrees;
+                $besoinsVilles[] = $villeData;
+            }
+        }
         
         // Calculer les dons matériels restants (dons bruts - quantités validées par dispatch)
         $dons_alloues = DashboardModel::getDonsMontantsValidees();

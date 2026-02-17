@@ -18,7 +18,8 @@
     </div>
 </div>
 
-<!-- Dons disponibles -->
+<!-- Dons disponibles (affiché seulement si au moins un besoin 100% couvert) -->
+<?php if (!empty($besoinsVilles)): ?>
 <div class="stats-grid">
     <?php foreach ($dons_restants as $nom => $quantite): 
         $quantiteInitiale = $dons_disponibles[$nom] ?? 0;
@@ -43,8 +44,16 @@
     </div>
     <?php endforeach; ?>
 </div>
+<?php endif; ?>
 
-<!-- Demandes par ville -->
+<!-- Demandes par ville (uniquement 100% couvertes) -->
+<?php if (empty($besoinsVilles)): ?>
+    <div style="text-align: center; padding: 60px 20px; background: #f8f9fa; border-radius: 12px; margin-top: 20px;">
+        <i class="bi bi-inbox" style="font-size: 3em; color: #adb5bd;"></i>
+        <h3 style="margin-top: 16px; color: #333;">Aucun besoin entièrement couvert</h3>
+        <p style="color: #666;">Les besoins apparaîtront ici une fois couverts à 100% (dons validés + achats).<br>Rendez-vous sur la page <a href="<?= BASE_URL ?>/simulation">Simulation</a> pour simuler et valider le dispatch.</p>
+    </div>
+<?php endif; ?>
 <?php foreach ($besoinsVilles as $villeData): ?>
 <div style="margin-bottom: 40px;">
     <h2 style="margin-bottom: 24px; padding-bottom: 12px; border-bottom: 2px solid var(--color-primary);">
@@ -61,22 +70,9 @@
             <?php
                 // Créer la clé unique pour ce produit
                 $cle = $demande['id_besoin_ville'] . '_' . $produit['id_besoin'];
-                
-                // Récupérer le statut de dispatch pour ce produit spécifique
                 $dispatchStatus = $dispatch[$cle] ?? null;
-                
-                if ($dispatchStatus) {
-                    $statut = $dispatchStatus['statut'];
-                    $alloue = $dispatchStatus['alloue'];
-                    $manquant = $dispatchStatus['manquant'];
-                    $pourcentage = $dispatchStatus['pourcentage'];
-                } else {
-                    // Aucun dispatch validé pour ce produit → non résolu
-                    $statut = 'unresolved';
-                    $alloue = 0;
-                    $manquant = $produit['quantite'];
-                    $pourcentage = 0;
-                }
+                $alloue = (int) ($dispatchStatus['alloue'] ?? 0);
+                $achete = (int) ($dispatchStatus['achete'] ?? 0);
             ?>
         <div class="card" style="margin-bottom: 12px;">
             <div class="card-header">
@@ -86,7 +82,7 @@
                 </div>
             </div>
             <div class="card-body">
-                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 16px;">
                     <div>
                         <strong style="font-size: 0.85em; color: #666;">DEMANDÉ</strong>
                         <p style="font-size: 1.2em; margin: 8px 0 0 0; color: var(--color-primary);">
@@ -94,27 +90,22 @@
                         </p>
                     </div>
                     <div>
-                        <strong style="font-size: 0.85em; color: #666;">ALLOUÉ</strong>
+                        <strong style="font-size: 0.85em; color: #666;">ALLOUÉ (dons)</strong>
                         <p style="font-size: 1.2em; margin: 8px 0 0 0; color: #4CAF50;">
                             <?= number_format($alloue, 0, ',', ' ') ?> <span style="font-size: 0.8em; color: #999;"><?= $produit['unite'] ?></span>
                         </p>
                     </div>
                     <div>
+                        <strong style="font-size: 0.85em; color: #666;">ACHETÉ</strong>
+                        <p style="font-size: 1.2em; margin: 8px 0 0 0; color: #FF9800;">
+                            <?= number_format($achete, 0, ',', ' ') ?> <span style="font-size: 0.8em; color: #999;"><?= $produit['unite'] ?></span>
+                        </p>
+                    </div>
+                    <div>
                         <strong style="font-size: 0.85em; color: #666;">STATUT</strong>
                         <p style="margin: 8px 0 0 0;">
-                            <?php
-                            $statusColor = '#4CAF50';
-                            $statusText = 'Complété';
-                            if ($statut === 'partial') {
-                                $statusColor = '#FF9800';
-                                $statusText = 'Partiel';
-                            } elseif ($statut === 'unresolved') {
-                                $statusColor = '#F44336';
-                                $statusText = 'Invalide';
-                            }
-                            ?>
-                            <span style="display: inline-block; padding: 4px 10px; border-radius: 3px; font-size: 0.85em; font-weight: 600; background-color: <?= $statusColor ?>20; color: <?= $statusColor ?>; border-left: 3px solid <?= $statusColor ?>;">
-                                <?= $statusText ?>
+                            <span style="display: inline-block; padding: 4px 10px; border-radius: 3px; font-size: 0.85em; font-weight: 600; background-color: #4CAF5020; color: #4CAF50; border-left: 3px solid #4CAF50;">
+                                <i class="bi bi-check-circle-fill"></i> Complété
                             </span>
                         </p>
                     </div>
