@@ -5,7 +5,7 @@
         <div class="page-header-icon"><i class="bi bi-cash-coin"></i></div>
         <div class="page-header-text">
             <h1>Caisse</h1>
-            <p>Gestion des dons d'argent</p>
+            <p>Gestion des dons d'argent zalah</p>
         </div>
     </div>
 
