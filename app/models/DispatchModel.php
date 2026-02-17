@@ -91,9 +91,7 @@ class DispatchModel
         return $statement->fetchAll(\PDO::FETCH_ASSOC);
     }
 
-    /**
-     * Les 3 types de stratégie de dispatch
-     */
+
     public const STRATEGIE_DATE = 'date';
     public const STRATEGIE_QUANTITE = 'quantite';
     public const STRATEGIE_EQUITABLE = 'equitable';
@@ -113,15 +111,12 @@ class DispatchModel
             ],
             self::STRATEGIE_EQUITABLE => [
                 'nom' => 'Équitable',
-                'description' => 'Répartition proportionnelle entre les villes',
+                'description' => 'Répartition égale entre les villes',
                 'icon' => 'bi-pie-chart',
             ],
         ];
     }
 
-    /**
-     * Grouper les demandes par besoin (type de produit)
-     */
     private static function grouperParBesoin(array $demandes): array
     {
         $demandesParBesoin = [];
@@ -135,9 +130,7 @@ class DispatchModel
         return $demandesParBesoin;
     }
 
-    /**
-     * Construire une ligne de dispatch à partir des données calculées
-     */
+
     private static function buildDispatchItem(array $demande, int $alloue): array
     {
         $quantiteDemandee = (int) $demande['quantite_demandee'];
@@ -165,10 +158,6 @@ class DispatchModel
         ];
     }
 
-    /**
-     * Stratégie 1 : Par date (FIFO — demandes les plus anciennes d'abord)
-     * C'est le comportement original existant.
-     */
     public static function calculerDispatch($dons, $demandes)
     {
         $demandesParBesoin = self::grouperParBesoin($demandes);
@@ -194,10 +183,6 @@ class DispatchModel
         return $dispatch;
     }
 
-    /**
-     * Stratégie 2 : Par quantité (plus petites demandes d'abord)
-     * On donne d'abord aux villes qui demandent le moins.
-     */
     public static function calculerDispatchParQuantite($dons, $demandes)
     {
         $demandesParBesoin = self::grouperParBesoin($demandes);
@@ -227,19 +212,6 @@ class DispatchModel
         return $dispatch;
     }
 
-    /**
-     * Stratégie 3 : Équitable (répartition proportionnelle - méthode du plus grand reste)
-     * 
-     * Chaque ville reçoit une part proportionnelle à sa demande :
-     *   part_i = (stock / somme_demandes) * demande_i
-     * 
-     * Étapes :
-     * 1. Arrondir vers le bas (floor) toutes les parts
-     * 2. Si la somme des parts arrondies < stock disponible :
-     *    - Trier par partie décimale décroissante
-     *    - Arrondir vers le haut (+1) les plus grands décimaux jusqu'à épuiser le reste
-     * 3. Plafonner chaque allocation à la demande réelle de la ville
-     */
     public static function calculerDispatchEquitable($dons, $demandes)
     {
         $demandesParBesoin = self::grouperParBesoin($demandes);
@@ -340,10 +312,6 @@ class DispatchModel
     }
 
 
-    /**
-     * @param bool $onlyNonValidated  Ne traiter que les demandes non (complètement) validées
-     * @param string $strategie  'date' | 'quantite' | 'equitable'
-     */
     public static function getDispatchComplet($onlyNonValidated = false, string $strategie = self::STRATEGIE_DATE)
     {
         $donsModel = new \app\models\DashboardModel();
