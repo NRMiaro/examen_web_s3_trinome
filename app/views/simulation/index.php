@@ -14,6 +14,13 @@
     </div>
 <?php endif; ?>
 
+<?php if (isset($_GET['success']) && $_GET['success'] === 'reset_done'): ?>
+    <div style="background: #fff3cd; border: 1px solid #ffc107; border-left: 4px solid #ffc107; padding: 12px 16px; border-radius: 6px; margin-bottom: 20px; color: #856404;">
+        <i class="bi bi-arrow-counterclockwise"></i>
+        <strong>Réinitialisé !</strong> Toutes les validations et achats ont été remis à zéro.
+    </div>
+<?php endif; ?>
+
 <div class="page-header">   
     <div class="page-header-left">
         <div class="page-header-icon"><i class="bi bi-clipboard-data"></i></div>
@@ -23,18 +30,51 @@
         </div>
     </div>
     <div class="page-header-right" style="display: flex; gap: 10px; align-items: center;">
-        <a href="<?= BASE_URL ?>/simulation" class="btn" style="padding: 10px 20px; font-size: 1em; border-radius: 6px; background-color: #007bff; color: white; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; text-decoration: none;">
-            <i class="bi bi-arrow-clockwise"></i>
-            Actualiser la simulation
-        </a>
+        <form method="POST" action="<?= BASE_URL ?>/simulation/reset" style="display: inline;" onsubmit="return confirm('Réinitialiser toutes les validations et achats ? Cette action est irréversible.');">
+            <button type="submit" style="padding: 10px 20px; font-size: 1em; border-radius: 6px; background-color: #dc3545; color: white; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 8px;">
+                <i class="bi bi-arrow-counterclockwise"></i>
+                Réinitialiser
+            </button>
+        </form>
         <?php if (!empty($besoinsVilles)): ?>
         <form method="POST" action="<?= BASE_URL ?>/simulation/valider" style="display: inline;">
+            <input type="hidden" name="strategie" value="<?= htmlspecialchars($strategie) ?>">
             <button type="submit" class="btn btn-success" style="padding: 10px 20px; font-size: 1em; border-radius: 6px; background-color: #28a745; color: white; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 8px;">
                 <i class="bi bi-check-circle"></i>
                 Valider le Dispatch
             </button>
         </form>
         <?php endif; ?>
+    </div>
+</div>
+
+<!-- Sélecteur de stratégie -->
+<div style="margin-bottom: 24px;">
+    <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+        <?php foreach ($strategies as $key => $info): 
+            $isActive = ($key === $strategie);
+            $bgColor = $isActive ? 'var(--color-primary)' : '#fff';
+            $textColor = $isActive ? '#fff' : '#333';
+            $borderColor = $isActive ? 'var(--color-primary)' : '#ddd';
+        ?>
+        <a href="<?= BASE_URL ?>/simulation?strategie=<?= $key ?>" 
+           style="flex: 1; min-width: 200px; padding: 16px 20px; border-radius: 10px; border: 2px solid <?= $borderColor ?>; background: <?= $bgColor ?>; color: <?= $textColor ?>; text-decoration: none; transition: all 0.2s; cursor: pointer; display: flex; align-items: center; gap: 12px;"
+           onmouseover="this.style.borderColor='var(--color-primary)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.1)';"
+           onmouseout="this.style.borderColor='<?= $borderColor ?>'; this.style.boxShadow='none';">
+            <div style="width: 42px; height: 42px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.3em; background: <?= $isActive ? 'rgba(255,255,255,0.2)' : '#f0f4ff' ?>; color: <?= $isActive ? '#fff' : 'var(--color-primary)' ?>;">
+                <i class="bi <?= $info['icon'] ?>"></i>
+            </div>
+            <div>
+                <div style="font-weight: 600; font-size: 0.95em;"><?= htmlspecialchars($info['nom']) ?></div>
+                <div style="font-size: 0.8em; opacity: 0.8;"><?= htmlspecialchars($info['description']) ?></div>
+            </div>
+            <?php if ($isActive): ?>
+            <div style="margin-left: auto;">
+                <i class="bi bi-check-circle-fill"></i>
+            </div>
+            <?php endif; ?>
+        </a>
+        <?php endforeach; ?>
     </div>
 </div>
 

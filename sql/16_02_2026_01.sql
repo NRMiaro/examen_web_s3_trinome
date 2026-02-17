@@ -2,7 +2,7 @@
 
 DROP DATABASE IF EXISTS s3_bngrc;
 CREATE DATABASE s3_bngrc;
-
+use s3_bngrc;
 -- 
 
 CREATE TABLE s3_ville (

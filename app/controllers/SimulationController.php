@@ -18,6 +18,13 @@ class SimulationController
 
     public function index()
     {
+        // Récupérer la stratégie choisie (par défaut : date)
+        $strategie = Flight::request()->query->strategie ?? DispatchModel::STRATEGIE_DATE;
+        $strategiesDisponibles = DispatchModel::getStrategiesDisponibles();
+        if (!isset($strategiesDisponibles[$strategie])) {
+            $strategie = DispatchModel::STRATEGIE_DATE;
+        }
+
         // Récupérer les données de base
         $liste_villes = DashboardModel::getListeVilles();
         $total_demande = DashboardModel::getTotalDemandeParBesoin();
@@ -25,8 +32,8 @@ class SimulationController
         // Couverture réelle de TOUTES les demandes (validé + acheté)
         $fullCoverage = DashboardModel::getDispatchValide();
         
-        // Simuler le dispatch théorique avec les dons restants
-        $dispatch_data = DispatchModel::getDispatchComplet(true);
+        // Simuler le dispatch théorique avec les dons restants + stratégie choisie
+        $dispatch_data = DispatchModel::getDispatchComplet(true, $strategie);
         
         // Stock disponible pour la simulation (après soustraction des validations)
         $dons_disponibles = $dispatch_data['dons'];
@@ -48,10 +55,6 @@ class SimulationController
         }
         
         // Filtrer besoinsVilles : garder seulement les produits NON 100% couverts
-        // Un produit est "non couvert" si :
-        //   - il n'a PAS d'entrée dans fullCoverage (jamais validé) → à afficher
-        //   - il a une entrée mais statut !== 'resolved' → à afficher
-        //   - il a statut 'resolved' → déjà complété, ne PAS afficher
         $besoinsVillesToutes = DashboardModel::getBesoinsParVille();
         $besoinsVilles = [];
         foreach ($besoinsVillesToutes as $villeData) {
@@ -60,7 +63,6 @@ class SimulationController
                 $produitsFiltres = [];
                 foreach ($demande['produits'] as $produit) {
                     $key = $demande['id_besoin_ville'] . '_' . $produit['id_besoin'];
-                    // Garder le produit s'il n'est PAS resolved (ou s'il n'existe pas dans coverage)
                     $covStatut = $fullCoverage[$key]['statut'] ?? null;
                     if ($covStatut !== 'resolved') {
                         $produitsFiltres[] = $produit;
@@ -88,6 +90,8 @@ class SimulationController
             'total_demande'    => $total_demande,
             'dispatch'         => $dispatchIndex,
             'coverage'         => $fullCoverage,
+            'strategie'        => $strategie,
+            'strategies'       => $strategiesDisponibles,
         ]);
     }
 
@@ -96,8 +100,15 @@ class SimulationController
         $db = Flight::db();
         
         try {
-            // Valider seulement les demandes avec manque restant, avec le stock restant
-            $dispatch_data = DispatchModel::getDispatchComplet(true);
+            // Lire la stratégie choisie depuis le formulaire POST
+            $strategie = Flight::request()->data->strategie ?? DispatchModel::STRATEGIE_DATE;
+            $strategiesDisponibles = DispatchModel::getStrategiesDisponibles();
+            if (!isset($strategiesDisponibles[$strategie])) {
+                $strategie = DispatchModel::STRATEGIE_DATE;
+            }
+
+            // Valider seulement les demandes avec manque restant, avec la stratégie choisie
+            $dispatch_data = DispatchModel::getDispatchComplet(true, $strategie);
             
             // Commencer une transaction
             $db->beginTransaction();
@@ -172,8 +183,8 @@ class SimulationController
             // Valider la transaction
             $db->commit();
             
-            // Rediriger vers la simulation pour voir les données mises à jour
-            Flight::redirect('/simulation?success=dispatch_valide');
+            // Rediriger vers la simulation avec la stratégie utilisée
+            Flight::redirect('/simulation?success=dispatch_valide&strategie=' . urlencode($strategie));
             
         } catch (\Exception $e) {
             // Annuler la transaction en cas d'erreur
@@ -183,6 +194,29 @@ class SimulationController
             
             // Rediriger avec message d'erreur
             Flight::redirect(BASE_URL . '/simulation?error=validation_failed');
+        }
+    }
+
+    /**
+     * Réinitialiser les tables de mouvement (validations + achats)
+     * Les données CRUD (villes, besoins, demandes, dons) ne sont PAS touchées.
+     */
+    public function reset()
+    {
+        $db = Flight::db();
+        
+        try {
+            $db->beginTransaction();
+            $db->exec("DELETE FROM s3_dispatch_validation");
+            $db->exec("DELETE FROM s3_achat");
+            $db->commit();
+            
+            Flight::redirect('/simulation?success=reset_done');
+        } catch (\Exception $e) {
+            if ($db->inTransaction()) {
+                $db->rollBack();
+            }
+            Flight::redirect('/simulation?error=validation_failed');
         }
     }
 }
