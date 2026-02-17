@@ -196,4 +196,27 @@ class SimulationController
             Flight::redirect(BASE_URL . '/simulation?error=validation_failed');
         }
     }
+
+    /**
+     * Réinitialiser les tables de mouvement (validations + achats)
+     * Les données CRUD (villes, besoins, demandes, dons) ne sont PAS touchées.
+     */
+    public function reset()
+    {
+        $db = Flight::db();
+        
+        try {
+            $db->beginTransaction();
+            $db->exec("DELETE FROM s3_dispatch_validation");
+            $db->exec("DELETE FROM s3_achat");
+            $db->commit();
+            
+            Flight::redirect('/simulation?success=reset_done');
+        } catch (\Exception $e) {
+            if ($db->inTransaction()) {
+                $db->rollBack();
+            }
+            Flight::redirect('/simulation?error=validation_failed');
+        }
+    }
 }

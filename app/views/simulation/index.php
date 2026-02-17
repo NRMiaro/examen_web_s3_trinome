@@ -14,6 +14,13 @@
     </div>
 <?php endif; ?>
 
+<?php if (isset($_GET['success']) && $_GET['success'] === 'reset_done'): ?>
+    <div style="background: #fff3cd; border: 1px solid #ffc107; border-left: 4px solid #ffc107; padding: 12px 16px; border-radius: 6px; margin-bottom: 20px; color: #856404;">
+        <i class="bi bi-arrow-counterclockwise"></i>
+        <strong>Réinitialisé !</strong> Toutes les validations et achats ont été remis à zéro.
+    </div>
+<?php endif; ?>
+
 <div class="page-header">   
     <div class="page-header-left">
         <div class="page-header-icon"><i class="bi bi-clipboard-data"></i></div>
@@ -23,6 +30,12 @@
         </div>
     </div>
     <div class="page-header-right" style="display: flex; gap: 10px; align-items: center;">
+        <form method="POST" action="<?= BASE_URL ?>/simulation/reset" style="display: inline;" onsubmit="return confirm('Réinitialiser toutes les validations et achats ? Cette action est irréversible.');">
+            <button type="submit" style="padding: 10px 20px; font-size: 1em; border-radius: 6px; background-color: #dc3545; color: white; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 8px;">
+                <i class="bi bi-arrow-counterclockwise"></i>
+                Réinitialiser
+            </button>
+        </form>
         <?php if (!empty($besoinsVilles)): ?>
         <form method="POST" action="<?= BASE_URL ?>/simulation/valider" style="display: inline;">
             <input type="hidden" name="strategie" value="<?= htmlspecialchars($strategie) ?>">

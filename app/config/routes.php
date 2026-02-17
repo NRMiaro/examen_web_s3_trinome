@@ -31,6 +31,11 @@ $router->group('', function (Router $router) use ($app) {
         $controller->valider();
     });
 
+    $router->post('/simulation/reset', function () use ($app) {
+        $controller = new SimulationController($app);
+        $controller->reset();
+    });
+
     // CRUD Besoins
     $router->group('/besoins', function () use ($router, $app) {
         $router->get('', function () use ($app) {
