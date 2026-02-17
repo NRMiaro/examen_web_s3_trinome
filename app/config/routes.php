@@ -6,6 +6,7 @@ use app\controllers\DonController;
 use app\controllers\CaisseController;
 use app\controllers\AchatController;
 use app\controllers\SimulationController;
+use app\controllers\RecapController;
 use app\models\DonModel;
 use app\middlewares\SecurityHeadersMiddleware;
 use flight\net\Router;
@@ -94,6 +95,17 @@ $router->group('', function (Router $router) use ($app) {
             $besoins = !empty($type) ? $model->getBesoinsByType($type) : [];
             Flight::json(['data' => $besoins]);
         });
+
+        $router->get('/recap', function () use ($app) {
+            $controller = new RecapController($app);
+            $controller->apiData();
+        });
+    });
+
+    // Récapitulation
+    $router->get('/recap', function () use ($app) {
+        $controller = new RecapController($app);
+        $controller->index();
     });
 
     // CRUD Caisse
