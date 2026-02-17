@@ -49,6 +49,10 @@
                 <i class="bi bi-cart-fill"></i>
                 <span class="nav-label">Achats</span>
             </a>
+            <a href="<?= BASE_URL ?>/recap" class="nav-link <?= ($active_menu ?? '') === 'recap' ? 'active' : '' ?>">
+                <i class="bi bi-pie-chart-fill"></i>
+                <span class="nav-label">Récapitulation</span>
+            </a>
         </nav>
 
         <button class="sidebar-toggle" id="sidebar-toggle">
