@@ -197,10 +197,6 @@ class SimulationController
         }
     }
 
-    /**
-     * Réinitialiser les tables de mouvement (validations + achats)
-     * Les données CRUD (villes, besoins, demandes, dons) ne sont PAS touchées.
-     */
     public function reset()
     {
         $db = Flight::db();

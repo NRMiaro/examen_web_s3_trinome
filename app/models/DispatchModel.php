@@ -91,7 +91,9 @@ class DispatchModel
         return $statement->fetchAll(\PDO::FETCH_ASSOC);
     }
 
-
+    /**
+     * Les 3 types de stratégie de dispatch
+     */
     public const STRATEGIE_DATE = 'date';
     public const STRATEGIE_QUANTITE = 'quantite';
     public const STRATEGIE_EQUITABLE = 'equitable';
@@ -111,12 +113,15 @@ class DispatchModel
             ],
             self::STRATEGIE_EQUITABLE => [
                 'nom' => 'Équitable',
-                'description' => 'Répartition égale entre les villes',
+                'description' => 'Répartition proportionnelle entre les villes',
                 'icon' => 'bi-pie-chart',
             ],
         ];
     }
 
+    /**
+     * Grouper les demandes par besoin (type de produit)
+     */
     private static function grouperParBesoin(array $demandes): array
     {
         $demandesParBesoin = [];
@@ -130,7 +135,9 @@ class DispatchModel
         return $demandesParBesoin;
     }
 
-
+    /**
+     * Construire une ligne de dispatch à partir des données calculées
+     */
     private static function buildDispatchItem(array $demande, int $alloue): array
     {
         $quantiteDemandee = (int) $demande['quantite_demandee'];
@@ -158,6 +165,9 @@ class DispatchModel
         ];
     }
 
+    /**
+     * Stratégie 1 : Par date (FIFO — demandes les plus anciennes d'abord)
+     */
     public static function calculerDispatch($dons, $demandes)
     {
         $demandesParBesoin = self::grouperParBesoin($demandes);
@@ -165,7 +175,6 @@ class DispatchModel
         $resteParBesoin = $dons;
 
         foreach ($demandesParBesoin as $besoinNom => $demandesList) {
-            // Déjà trié par date dans la requête SQL
             $resteActuel = $resteParBesoin[$besoinNom] ?? 0;
 
             foreach ($demandesList as $demande) {
@@ -183,6 +192,9 @@ class DispatchModel
         return $dispatch;
     }
 
+    /**
+     * Stratégie 2 : Par quantité (plus petites demandes d'abord)
+     */
     public static function calculerDispatchParQuantite($dons, $demandes)
     {
         $demandesParBesoin = self::grouperParBesoin($demandes);
@@ -190,7 +202,6 @@ class DispatchModel
         $resteParBesoin = $dons;
 
         foreach ($demandesParBesoin as $besoinNom => $demandesList) {
-            // Trier par quantité demandée croissante
             usort($demandesList, function ($a, $b) {
                 return (int) $a['quantite_demandee'] <=> (int) $b['quantite_demandee'];
             });
@@ -212,6 +223,19 @@ class DispatchModel
         return $dispatch;
     }
 
+    /**
+     * Stratégie 3 : Équitable (répartition proportionnelle - méthode du plus grand reste)
+     * 
+     * Chaque ville reçoit une part proportionnelle à sa demande :
+     *   part_i = (stock / somme_demandes) * demande_i
+     * 
+     * Étapes :
+     * 1. Arrondir vers le bas (floor) toutes les parts
+     * 2. Si la somme des parts arrondies < stock disponible :
+     *    - Trier par partie décimale décroissante
+     *    - Arrondir vers le haut (+1) les plus grands décimaux jusqu'à épuiser le reste
+     * 3. Plafonner chaque allocation à la demande réelle de la ville
+     */
     public static function calculerDispatchEquitable($dons, $demandes)
     {
         $demandesParBesoin = self::grouperParBesoin($demandes);
@@ -221,32 +245,27 @@ class DispatchModel
         foreach ($demandesParBesoin as $besoinNom => $demandesList) {
             $stock = $resteParBesoin[$besoinNom] ?? 0;
 
-            // Calculer la somme totale des demandes pour ce produit
             $sommeDemandes = 0;
             foreach ($demandesList as $demande) {
                 $sommeDemandes += (int) $demande['quantite_demandee'];
             }
 
-            // Initialiser les allocations
             $allocations = [];
             foreach ($demandesList as $i => $demande) {
                 $allocations[$i] = 0;
             }
 
             if ($stock > 0 && $sommeDemandes > 0) {
-                // Si le stock couvre toute la demande, donner exactement ce qui est demandé
                 if ($stock >= $sommeDemandes) {
                     foreach ($demandesList as $i => $demande) {
                         $allocations[$i] = (int) $demande['quantite_demandee'];
                     }
                 } else {
-                    // Calculer la part proportionnelle exacte de chaque ville
                     $ratio = $stock / $sommeDemandes;
                     $partsExactes = [];
                     foreach ($demandesList as $i => $demande) {
                         $qte = (int) $demande['quantite_demandee'];
-                        $partExacte = $ratio * $qte;
-                        $partsExactes[$i] = $partExacte;
+                        $partsExactes[$i] = $ratio * $qte;
                     }
 
                     // Étape 1 : Arrondir vers le bas (floor)
@@ -254,9 +273,7 @@ class DispatchModel
                     foreach ($partsExactes as $i => $partExacte) {
                         $qte = (int) $demandesList[$i]['quantite_demandee'];
                         $arrondi = (int) floor($partExacte);
-                        // Plafonner à la demande réelle
                         $allocations[$i] = min($arrondi, $qte);
-                        // Garder la partie décimale pour le tri
                         $partiesDecimales[$i] = $partExacte - floor($partExacte);
                     }
 
@@ -273,7 +290,6 @@ class DispatchModel
                             break;
                         }
                         $qte = (int) $demandesList[$i]['quantite_demandee'];
-                        // Ne pas dépasser la demande réelle
                         if ($allocations[$i] < $qte) {
                             $allocations[$i] += 1;
                             $reste -= 1;
@@ -282,7 +298,6 @@ class DispatchModel
                 }
             }
 
-            // Construire les lignes de dispatch
             foreach ($demandesList as $i => $demande) {
                 $cle = $demande['id_besoin_ville'] . '_' . $demande['id_besoin'];
                 $dispatch[$cle] = self::buildDispatchItem($demande, $allocations[$i]);
@@ -311,14 +326,16 @@ class DispatchModel
         return $result;
     }
 
-
+    /**
+     * @param bool $onlyNonValidated  Ne traiter que les demandes non (complètement) validées
+     * @param string $strategie  'date' | 'quantite' | 'equitable'
+     */
     public static function getDispatchComplet($onlyNonValidated = false, string $strategie = self::STRATEGIE_DATE)
     {
         $donsModel = new \app\models\DashboardModel();
-        $dons = $donsModel::getDonsObtenus(); // Total brut des dons matériels
+        $dons = $donsModel::getDonsObtenus();
         
         if ($onlyNonValidated) {
-            // Soustraire les quantités déjà validées du stock disponible
             $dejaValide = self::getQuantitesDejaValidees();
             foreach ($dejaValide as $besoinNom => $quantiteValidee) {
                 if (isset($dons[$besoinNom])) {
@@ -328,14 +345,11 @@ class DispatchModel
                     }
                 }
             }
-            
-            // Récupérer les demandes avec manque restant
             $demandes = self::getDemandesAvecManque();
         } else {
             $demandes = self::getDemandesTotales();
         }
         
-        // Choisir la méthode de calcul selon la stratégie
         switch ($strategie) {
             case self::STRATEGIE_QUANTITE:
                 $dispatch = self::calculerDispatchParQuantite($dons, $demandes);
