@@ -23,7 +23,7 @@
                 <div>
                     <p style="margin: 0; font-size: 14px; opacity: 0.9;">Solde total</p>
                     <h2 style="margin: 10px 0 0 0; font-size: 32px; font-weight: bold;">
-                       <?= number_format($recap['dons_financiers_total'], 0, ',', ' ') ?> Ar
+                       <?= number_format($total, 0, ',', ' ') ?> Ar
                     </h2>
                 </div>
                 <i class="bi bi-wallet2" style="font-size: 48px; opacity: 0.3;"></i>
