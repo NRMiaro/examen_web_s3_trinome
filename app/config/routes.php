@@ -55,7 +55,12 @@ $router->group('', function (Router $router) use ($app) {
 
         $router->post('', function () use ($app) {
             $controller = new BesoinController($app);
-            $controller->store();
+            $controller->storeDemandeVille();
+        });
+
+        $router->post('/creer', function () use ($app) {
+            $controller = new BesoinController($app);
+            $controller->storeBesoin();
         });
 
         $router->get('/@id/modifier', function ($id) use ($app) {

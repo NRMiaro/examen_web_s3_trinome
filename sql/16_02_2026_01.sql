@@ -10,21 +10,14 @@ CREATE TABLE s3_ville (
     nom VARCHAR(50)
 );
 
-INSERT INTO s3_ville (nom) 
-VALUES 
-    ('Antananarivo'),
-    ('Mahajanga');
+-- Les données de s3_ville sont insérées via 17_02_2026_05_donnees_besoins_villes.sql
 
 CREATE TABLE s3_type_besoin (
     id INT AUTO_INCREMENT PRIMARY KEY,
     nom VARCHAR(50)
 );
 
-INSERT INTO s3_type_besoin (nom) 
-VALUES 
-    ('nature'),
-    ('matériel'),
-    ('argent');
+-- Les données de s3_type_besoin sont insérées via 17_02_2026_05_donnees_besoins_villes.sql
 
 CREATE TABLE s3_besoin (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -34,11 +27,7 @@ CREATE TABLE s3_besoin (
     FOREIGN KEY (id_type_besoin) REFERENCES s3_type_besoin(id)
 );
 
-INSERT INTO s3_besoin (id_type_besoin, nom, prix) 
-VALUES 
-    (1, 'Riz', 1000),
-    (1, 'Huile', 4000);
-
+-- Les données de s3_besoin sont insérées via 17_02_2026_05_donnees_besoins_villes.sql
 
 -- Une ville fait une demande (on stocke les détails dans s3_besoin_ville_details)
 CREATE TABLE s3_besoin_ville (
@@ -48,11 +37,7 @@ CREATE TABLE s3_besoin_ville (
     FOREIGN KEY (id_ville) REFERENCES s3_ville(id)
 );
 
-INSERT INTO s3_besoin_ville 
-    (id_ville, date_besoin)
-VALUES 
-    (1, '2026-02-16 10:00:00'),
-    (2, '2026-02-16 12:00:00');
+-- Les données de s3_besoin_ville sont insérées via 17_02_2026_05_donnees_besoins_villes.sql
 
 -- Détails d'une demande de besoins
 CREATE TABLE s3_besoin_ville_details (
@@ -64,24 +49,14 @@ CREATE TABLE s3_besoin_ville_details (
     FOREIGN KEY (id_besoin) REFERENCES s3_besoin(id)
 );
 
-INSERT INTO s3_besoin_ville_details 
-    (id_besoin_ville, id_besoin, quantite)
-VALUES 
-    (1, 1, 1000), -- tana demande 1000kg de riz
-    (1, 2, 500),  -- tana demande 500L de huile
-    (2, 1, 2000), -- mahajanga demande 2000kg de riz
-    (2, 2, 1000);  -- mahajanga demande 1000L de huile
-
+-- Les données de s3_besoin_ville_details sont insérées via 17_02_2026_05_donnees_besoins_villes.sql
 
 CREATE TABLE s3_don (
     id int AUTO_INCREMENT PRIMARY KEY,
     date_don datetime
 );
 
-INSERT INTO s3_don 
-    (date_don)
-VALUES 
-    ('2026-02-16 14:00:00');
+-- Les données de test des dons ont été retirées
 
 create table s3_don_details (
     id int AUTO_INCREMENT PRIMARY KEY,
@@ -92,8 +67,4 @@ create table s3_don_details (
     FOREIGN KEY (id_besoin) REFERENCES s3_besoin(id)
 );
 
-insert into s3_don_details 
-    (id_don, id_besoin, quantite)
-VALUES 
-    (1, 1, 2500),
-    (1, 2, 1200);
+-- Les données de test des dons ont été retirées

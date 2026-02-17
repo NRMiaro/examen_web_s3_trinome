@@ -1,5 +1,5 @@
 RewriteEngine On
-RewriteBase /examen_web_s3_trinome/
+RewriteBase /ETU004303/examen_web_s3_trinome/
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^ index.php [QSA,L]

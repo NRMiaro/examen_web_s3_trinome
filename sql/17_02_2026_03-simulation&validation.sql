@@ -1,4 +1,8 @@
-CREATE OR REPLACE TABLE s3_dispatch_validation (
+-- Supprimer la table si elle existe déjà
+DROP TABLE IF EXISTS s3_dispatch_validation;
+
+-- Créer la table de validation des dispatches
+CREATE TABLE s3_dispatch_validation (
     id INT AUTO_INCREMENT PRIMARY KEY,
     
     -- Liens aux demandes originales

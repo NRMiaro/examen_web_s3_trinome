@@ -71,10 +71,10 @@ return [
 	 **************************************/
 	'database' => [
 		// MySQL Example:
-		'host'     => '127.0.0.1',
-		'dbname'   => 's3_bngrc',
-		'user'     => 'root',
-		'password' => '',
+		'host'     => '172.16.7.131',
+		'dbname'   => 'db_s2_ETU004303',
+		'user'     => 'ETU004303',
+		'password' => 'kWxsDOQR',
 
 		// SQLite Example:
 		// 'file_path' => __DIR__ . $ds . '..' . $ds . 'database.sqlite', // Path to SQLite file

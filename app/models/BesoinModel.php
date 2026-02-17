@@ -98,8 +98,30 @@ class BesoinModel
 
     public function deleteBesoin($id)
     {
+        // Vérifier d'abord s'il y a des références dans s3_besoin_ville_details
+        $checkStmt = $this->db->prepare("
+            SELECT COUNT(*) as count 
+            FROM s3_besoin_ville_details 
+            WHERE id_besoin = :id
+        ");
+        $checkStmt->execute([':id' => $id]);
+        $result = $checkStmt->fetch(\PDO::FETCH_ASSOC);
+        
+        if ($result['count'] > 0) {
+            return [
+                'success' => false,
+                'message' => 'Ce besoin ne peut pas être supprimé car il est lié à une ou plusieurs villes.'
+            ];
+        }
+        
+        // Si aucune référence, procéder à la suppression
         $stmt = $this->db->prepare("DELETE FROM s3_besoin WHERE id = :id");
-        return $stmt->execute([':id' => $id]);
+        $deleted = $stmt->execute([':id' => $id]);
+        
+        return [
+            'success' => $deleted,
+            'message' => $deleted ? 'Besoin supprimé avec succès.' : 'Erreur lors de la suppression du besoin.'
+        ];
     }
 
     public function createBesoinVille($idVille, $dateBesoin, $besoins)

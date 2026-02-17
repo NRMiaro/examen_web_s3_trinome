@@ -1,3 +1,1 @@
--- Ajouter le besoin "Argent" de type argent s'il n'existe pas
-INSERT IGNORE INTO s3_besoin (id_type_besoin, nom, prix) 
-VALUES (3, 'Argent', 0);
+-- Le besoin "Argent" est désormais inséré via 17_02_2026_05_donnees_besoins_villes.sql

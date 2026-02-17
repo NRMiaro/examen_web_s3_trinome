@@ -44,6 +44,7 @@ class DashboardModel
                 b.nom as besoin_nom,
                 b.prix as besoin_prix,
                 bvd.quantite,
+                bvd.ordre,
                 tb.nom as type_besoin
             FROM s3_besoin_ville bv
             JOIN s3_ville v 
@@ -54,7 +55,7 @@ class DashboardModel
                 ON bvd.id_besoin = b.id
             JOIN s3_type_besoin tb 
                 ON b.id_type_besoin = tb.id
-            ORDER BY v.nom, bv.id, b.nom
+            ORDER BY v.nom, bvd.ordre, bv.id, b.nom
         ";
         $statement = Flight::db()->query($sql);
         $rows = $statement->fetchAll(\PDO::FETCH_ASSOC);
@@ -118,10 +119,20 @@ class DashboardModel
     {
         $unites = [
             'Riz' => 'kg',
+            'Riz (kg)' => 'kg',
             'Huile' => 'L',
+            'Huile (L)' => 'L',
             'Eau' => 'L',
+            'Eau (L)' => 'L',
+            'Haricots' => 'kg',
             'Couvertures' => 'pcs',
-            'Nourriture' => 'portions'
+            'Nourriture' => 'portions',
+            'Tôle' => 'pcs',
+            'Bâche' => 'pcs',
+            'Clous (kg)' => 'kg',
+            'Bois' => 'pcs',
+            'groupe' => 'pcs',
+            'Argent' => 'Ar',
         ];
         return $unites[$nomBesoin] ?? 'unités';
     }

@@ -31,25 +31,27 @@ DELETE d FROM s3_don d
 LEFT JOIN s3_don_details dd ON d.id = dd.id_don
 WHERE dd.id IS NULL;
 
--- 5. Supprimer les besoin_ville_details qui référencent des besoins argent (si existants)
-DELETE bvd FROM s3_besoin_ville_details bvd
-JOIN s3_besoin b ON bvd.id_besoin = b.id
-JOIN s3_type_besoin tb ON b.id_type_besoin = tb.id
-WHERE tb.nom IN ('argent', 'financier');
+-- 5. NE PAS supprimer les besoin_ville_details de type argent 
+-- (le type 'argent' est maintenant un besoin valide que les villes peuvent demander)
+-- DELETE bvd FROM s3_besoin_ville_details bvd
+-- JOIN s3_besoin b ON bvd.id_besoin = b.id
+-- JOIN s3_type_besoin tb ON b.id_type_besoin = tb.id
+-- WHERE tb.nom IN ('argent', 'financier');
 
--- 6. Supprimer les achats qui référencent des besoins argent (si existants)
-DELETE a FROM s3_achat a
-JOIN s3_besoin b ON a.id_besoin = b.id
-JOIN s3_type_besoin tb ON b.id_type_besoin = tb.id
-WHERE tb.nom IN ('argent', 'financier');
+-- 6. NE PAS supprimer les achats de type argent
+-- DELETE a FROM s3_achat a
+-- JOIN s3_besoin b ON a.id_besoin = b.id
+-- JOIN s3_type_besoin tb ON b.id_type_besoin = tb.id
+-- WHERE tb.nom IN ('argent', 'financier');
 
--- 7. Supprimer les besoins de type argent (plus de FK qui les référencent)
-DELETE b FROM s3_besoin b
-JOIN s3_type_besoin tb ON b.id_type_besoin = tb.id
-WHERE tb.nom IN ('argent', 'financier');
+-- 7. NE PAS supprimer les besoins de type argent (ils sont conservés)
+-- DELETE b FROM s3_besoin b
+-- JOIN s3_type_besoin tb ON b.id_type_besoin = tb.id
+-- WHERE tb.nom IN ('argent', 'financier');
 
--- 8. Supprimer les types de besoin 'argent' et 'financier'
-DELETE FROM s3_type_besoin WHERE nom IN ('argent', 'financier');
+-- 8. NE PAS supprimer les types de besoin 'argent' (conservé pour les demandes financières des villes)
+-- Le type 'financier' est supprimé s'il existe (doublon)
+DELETE FROM s3_type_besoin WHERE nom = 'financier';
 
 -- 9. Recréer la vue v_caisse pour lire depuis s3_don_financier
 DROP VIEW IF EXISTS v_caisse;

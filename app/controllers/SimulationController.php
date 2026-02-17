@@ -133,6 +133,20 @@ class SimulationController
                 (id_besoin_ville, id_besoin, quantite_demandee, quantite_allouee, quantite_manquante, statut)
                 VALUES (:id_besoin_ville, :id_besoin, :quantite_demandee, :quantite_allouee, :quantite_manquante, :statut)
             ");
+
+            // Requête pour vérifier le type de besoin
+            $stmtTypeBesoin = $db->prepare("
+                SELECT tb.nom AS type_besoin 
+                FROM s3_besoin b 
+                JOIN s3_type_besoin tb ON b.id_type_besoin = tb.id 
+                WHERE b.id = :id_besoin
+            ");
+
+            // Requête pour retirer de la caisse quand on alloue de l'argent
+            $stmtRetirerCaisse = $db->prepare("
+                INSERT INTO s3_don_financier (montant, date_don) 
+                VALUES (:montant, CURRENT_TIMESTAMP)
+            ");
             
             // Insérer ou mettre à jour chaque ligne de dispatch
             foreach ($dispatch_data['dispatch'] as $item) {
@@ -177,6 +191,18 @@ class SimulationController
                         ':quantite_manquante'  => $quantite_manquante,
                         ':statut'              => $statut,
                     ]);
+                }
+                
+                // Si c'est un besoin de type argent et qu'on a alloué un montant,
+                // retirer ce montant de la caisse (montant négatif dans s3_don_financier)
+                if ($nouvelAlloue > 0) {
+                    $stmtTypeBesoin->execute([':id_besoin' => $item['id_besoin']]);
+                    $typeBesoin = $stmtTypeBesoin->fetch(\PDO::FETCH_ASSOC);
+                    if ($typeBesoin && $typeBesoin['type_besoin'] === 'argent') {
+                        $stmtRetirerCaisse->execute([
+                            ':montant' => -$nouvelAlloue
+                        ]);
+                    }
                 }
             }
             

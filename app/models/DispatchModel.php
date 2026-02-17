@@ -16,12 +16,15 @@ class DispatchModel
                 v.nom AS ville_nom,
                 b.id AS id_besoin,
                 b.nom AS besoin_nom,
-                bvd.quantite AS quantite_demandee
+                tb.nom AS type_besoin,
+                bvd.quantite AS quantite_demandee,
+                bvd.ordre
             FROM s3_besoin_ville bv
             JOIN s3_ville v ON bv.id_ville = v.id
             JOIN s3_besoin_ville_details bvd ON bvd.id_besoin_ville = bv.id
             JOIN s3_besoin b ON bvd.id_besoin = b.id
-            ORDER BY b.nom, bv.date_besoin, v.nom
+            JOIN s3_type_besoin tb ON b.id_type_besoin = tb.id
+            ORDER BY b.nom, bvd.ordre, bv.date_besoin, v.nom
         ";
         $statement = Flight::db()->query($sql);
         return $statement->fetchAll(\PDO::FETCH_ASSOC);
@@ -37,17 +40,20 @@ class DispatchModel
                 v.nom AS ville_nom,
                 b.id AS id_besoin,
                 b.nom AS besoin_nom,
-                bvd.quantite AS quantite_demandee
+                tb.nom AS type_besoin,
+                bvd.quantite AS quantite_demandee,
+                bvd.ordre
             FROM s3_besoin_ville bv
             JOIN s3_ville v ON bv.id_ville = v.id
             JOIN s3_besoin_ville_details bvd ON bvd.id_besoin_ville = bv.id
             JOIN s3_besoin b ON bvd.id_besoin = b.id
+            JOIN s3_type_besoin tb ON b.id_type_besoin = tb.id
             WHERE NOT EXISTS (
                 SELECT 1 FROM s3_dispatch_validation sdv
                 WHERE sdv.id_besoin_ville = bv.id
                 AND sdv.id_besoin = b.id
             )
-            ORDER BY b.nom, bv.date_besoin, v.nom
+            ORDER BY b.nom, bvd.ordre, bv.date_besoin, v.nom
         ";
         $statement = Flight::db()->query($sql);
         return $statement->fetchAll(\PDO::FETCH_ASSOC);
@@ -64,6 +70,8 @@ class DispatchModel
                 v.nom AS ville_nom,
                 b.id AS id_besoin,
                 b.nom AS besoin_nom,
+                tb.nom AS type_besoin,
+                bvd.ordre,
                 GREATEST(0,
                     CASE 
                         WHEN sdv.id IS NOT NULL THEN sdv.quantite_manquante
@@ -75,6 +83,7 @@ class DispatchModel
             JOIN s3_ville v ON bv.id_ville = v.id
             JOIN s3_besoin_ville_details bvd ON bvd.id_besoin_ville = bv.id
             JOIN s3_besoin b ON bvd.id_besoin = b.id
+            JOIN s3_type_besoin tb ON b.id_type_besoin = tb.id
             LEFT JOIN s3_dispatch_validation sdv 
                 ON sdv.id_besoin_ville = bv.id AND sdv.id_besoin = b.id
             LEFT JOIN (
@@ -85,7 +94,7 @@ class DispatchModel
             WHERE sdv.id IS NULL 
                OR sdv.quantite_manquante > 0
             HAVING quantite_demandee > 0
-            ORDER BY b.nom, bv.date_besoin, v.nom
+            ORDER BY b.nom, bvd.ordre, bv.date_besoin, v.nom
         ";
         $statement = Flight::db()->query($sql);
         return $statement->fetchAll(\PDO::FETCH_ASSOC);
@@ -164,7 +173,16 @@ class DispatchModel
         $resteParBesoin = $dons;
 
         foreach ($demandesParBesoin as $besoinNom => $demandesList) {
-            // Déjà trié par date dans la requête SQL
+            // Trier par ordre de soumission (colonne 'ordre'), puis par date
+            usort($demandesList, function ($a, $b) {
+                $ordreA = $a['ordre'] ?? PHP_INT_MAX;
+                $ordreB = $b['ordre'] ?? PHP_INT_MAX;
+                if ($ordreA !== $ordreB) {
+                    return $ordreA <=> $ordreB;
+                }
+                return ($a['date_besoin'] ?? '') <=> ($b['date_besoin'] ?? '');
+            });
+
             $resteActuel = $resteParBesoin[$besoinNom] ?? 0;
 
             foreach ($demandesList as $demande) {
@@ -189,9 +207,13 @@ class DispatchModel
         $resteParBesoin = $dons;
 
         foreach ($demandesParBesoin as $besoinNom => $demandesList) {
-            // Trier par quantité demandée croissante
+            // Trier par quantité demandée croissante, puis par ordre de soumission
             usort($demandesList, function ($a, $b) {
-                return (int) $a['quantite_demandee'] <=> (int) $b['quantite_demandee'];
+                $cmpQte = (int) $a['quantite_demandee'] <=> (int) $b['quantite_demandee'];
+                if ($cmpQte !== 0) return $cmpQte;
+                $ordreA = $a['ordre'] ?? PHP_INT_MAX;
+                $ordreB = $b['ordre'] ?? PHP_INT_MAX;
+                return $ordreA <=> $ordreB;
             });
 
             $resteActuel = $resteParBesoin[$besoinNom] ?? 0;
@@ -310,11 +332,29 @@ class DispatchModel
         return $result;
     }
 
+    /**
+     * Récupérer le solde de la caisse (dons financiers - achats)
+     * Utilisé comme "stock" pour le besoin Argent dans la simulation
+     */
+    public static function getSoldeCaisse(): int
+    {
+        $sql = "SELECT solde FROM v_solde_caisse LIMIT 1";
+        $statement = Flight::db()->query($sql);
+        $row = $statement->fetch(\PDO::FETCH_ASSOC);
+        return $row ? max(0, (int) $row['solde']) : 0;
+    }
+
 
     public static function getDispatchComplet($onlyNonValidated = false, string $strategie = self::STRATEGIE_DATE)
     {
         $donsModel = new \app\models\DashboardModel();
         $dons = $donsModel::getDonsObtenus(); // Total brut des dons matériels
+        
+        // Ajouter le solde de la caisse comme stock disponible pour le besoin "Argent"
+        $soldeCaisse = self::getSoldeCaisse();
+        if ($soldeCaisse > 0) {
+            $dons['Argent'] = ($dons['Argent'] ?? 0) + $soldeCaisse;
+        }
         
         if ($onlyNonValidated) {
             // Soustraire les quantités déjà validées du stock disponible
