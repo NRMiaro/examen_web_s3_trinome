@@ -124,11 +124,118 @@ class DashboardModel
         return $result;
     }
 
+    public static function getDonsMontantsValidees(): array
+    {
+        $sql = "
+            SELECT 
+                b.nom AS besoin_nom,
+                SUM(sdv.quantite_allouee) AS quantite_allouee
+            FROM s3_dispatch_validation sdv
+            JOIN s3_besoin b ON sdv.id_besoin = b.id
+            GROUP BY b.id, b.nom
+        ";
+        $statement = Flight::db()->query($sql);
+        $result = [];
+        while ($row = $statement->fetch(\PDO::FETCH_ASSOC)) {
+            $result[$row['besoin_nom']] = (int) $row['quantite_allouee'];
+        }
+        return $result;
+    }
+
+    public static function getDispatchValide(): array
+    {
+        $sql = "
+            SELECT 
+                sdv.id_besoin_ville,
+                sdv.id_besoin,
+                sdv.quantite_demandee,
+                sdv.quantite_allouee,
+                sdv.quantite_manquante,
+                sdv.statut,
+                bv.date_besoin,
+                bv.id_ville,
+                v.nom AS ville_nom,
+                b.nom AS besoin_nom
+            FROM s3_dispatch_validation sdv
+            JOIN s3_besoin_ville bv ON sdv.id_besoin_ville = bv.id
+            JOIN s3_ville v ON bv.id_ville = v.id
+            JOIN s3_besoin b ON sdv.id_besoin = b.id
+            ORDER BY b.nom, bv.date_besoin, v.nom
+        ";
+        $statement = Flight::db()->query($sql);
+        
+        // Récupérer les achats par ville + besoin
+        $achats = self::getAchatsParVilleBesoin();
+        
+        $dispatch = [];
+        
+        while ($row = $statement->fetch(\PDO::FETCH_ASSOC)) {
+            $cle = $row['id_besoin_ville'] . '_' . $row['id_besoin'];
+            
+            // Quantité allouée par le dispatch validé
+            $alloueDispatch = (int) $row['quantite_allouee'];
+            
+            // Quantité achetée pour cette ville + ce besoin
+            $cleAchat = $row['id_ville'] . '_' . $row['id_besoin'];
+            $achete = $achats[$cleAchat] ?? 0;
+            
+            // Total réellement couvert = dispatch + achats
+            $totalCouvert = $alloueDispatch + $achete;
+            $quantiteDemandee = (int) $row['quantite_demandee'];
+            $manquant = max(0, $quantiteDemandee - $totalCouvert);
+            
+            // Recalculer le statut en tenant compte des achats
+            if ($manquant === 0) {
+                $statut = 'resolved';
+            } elseif ($totalCouvert > 0) {
+                $statut = 'partial';
+            } else {
+                $statut = 'unresolved';
+            }
+            
+            $pourcentage = $quantiteDemandee > 0 
+                ? min(100, round(($totalCouvert / $quantiteDemandee) * 100))
+                : 0;
+            
+            $dispatch[$cle] = [
+                'id_besoin_ville' => $row['id_besoin_ville'],
+                'id_besoin' => $row['id_besoin'],
+                'besoin_nom' => $row['besoin_nom'],
+                'ville_nom' => $row['ville_nom'],
+                'date_besoin' => $row['date_besoin'],
+                'quantite_demandee' => $quantiteDemandee,
+                'alloue' => $totalCouvert,
+                'alloue_dispatch' => $alloueDispatch,
+                'alloue_achat' => $achete,
+                'manquant' => $manquant,
+                'statut' => $statut,
+                'pourcentage' => $pourcentage
+            ];
+        }
+        
+        return $dispatch;
+    }
+
     /**
-     * Retourne l'unité de mesure selon le type de besoin
-     * @param string $nomBesoin
-     * @return string
+     * Récupère les quantités achetées groupées par ville + besoin
+     * @return array ['id_ville_id_besoin' => quantite, ...]
      */
+    public static function getAchatsParVilleBesoin(): array
+    {
+        $sql = "
+            SELECT a.id_ville, a.id_besoin, SUM(a.quantite) AS quantite_achetee
+            FROM s3_achat a
+            GROUP BY a.id_ville, a.id_besoin
+        ";
+        $statement = Flight::db()->query($sql);
+        $result = [];
+        while ($row = $statement->fetch(\PDO::FETCH_ASSOC)) {
+            $cle = $row['id_ville'] . '_' . $row['id_besoin'];
+            $result[$cle] = (int) $row['quantite_achetee'];
+        }
+        return $result;
+    }
+
     private static function getUnite(string $nomBesoin): string
     {
         $unites = [
