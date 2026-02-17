@@ -6,7 +6,7 @@ use Flight;
 
 class DispatchModel
 {
-    public static function getDemandesTotales(): array
+    public static function getDemandesTotales()
     {
         $sql = "
             SELECT 
@@ -27,7 +27,72 @@ class DispatchModel
         return $statement->fetchAll(\PDO::FETCH_ASSOC);
     }
 
-    public static function calculerDispatch(array $dons, array $demandes): array
+    /**
+     * Retourne les demandes qui n'ont jamais été validées.
+     */
+    public static function getDemandesTotalesNonValidees()
+    {
+        $sql = "
+            SELECT 
+                bv.id AS id_besoin_ville,
+                bv.date_besoin,
+                v.id AS id_ville,
+                v.nom AS ville_nom,
+                b.id AS id_besoin,
+                b.nom AS besoin_nom,
+                bvd.quantite AS quantite_demandee
+            FROM s3_besoin_ville bv
+            JOIN s3_ville v ON bv.id_ville = v.id
+            JOIN s3_besoin_ville_details bvd ON bvd.id_besoin_ville = bv.id
+            JOIN s3_besoin b ON bvd.id_besoin = b.id
+            WHERE NOT EXISTS (
+                SELECT 1 FROM s3_dispatch_validation sdv
+                WHERE sdv.id_besoin_ville = bv.id
+                AND sdv.id_besoin = b.id
+            )
+            ORDER BY b.nom, bv.date_besoin, v.nom
+        ";
+        $statement = Flight::db()->query($sql);
+        return $statement->fetchAll(\PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Retourne les demandes qui ont encore un manque :
+     * - Soit jamais validées (pas d'entrée dans s3_dispatch_validation)
+     * - Soit validées mais avec quantite_manquante > 0 (partial ou unresolved)
+     * 
+     * Pour les demandes déjà partiellement validées, la quantite_demandee
+     * est ajustée à la quantite_manquante restante.
+     */
+    public static function getDemandesAvecManque()
+    {
+        $sql = "
+            SELECT 
+                bv.id AS id_besoin_ville,
+                bv.date_besoin,
+                v.id AS id_ville,
+                v.nom AS ville_nom,
+                b.id AS id_besoin,
+                b.nom AS besoin_nom,
+                CASE 
+                    WHEN sdv.id IS NOT NULL THEN sdv.quantite_manquante
+                    ELSE bvd.quantite
+                END AS quantite_demandee
+            FROM s3_besoin_ville bv
+            JOIN s3_ville v ON bv.id_ville = v.id
+            JOIN s3_besoin_ville_details bvd ON bvd.id_besoin_ville = bv.id
+            JOIN s3_besoin b ON bvd.id_besoin = b.id
+            LEFT JOIN s3_dispatch_validation sdv 
+                ON sdv.id_besoin_ville = bv.id AND sdv.id_besoin = b.id
+            WHERE sdv.id IS NULL 
+               OR sdv.quantite_manquante > 0
+            ORDER BY b.nom, bv.date_besoin, v.nom
+        ";
+        $statement = Flight::db()->query($sql);
+        return $statement->fetchAll(\PDO::FETCH_ASSOC);
+    }
+
+    public static function calculerDispatch($dons, $demandes)
     {
         // Grouper les demandes par besoin (type de produit) et trier par date
         $demandesParBesoin = [];
@@ -89,11 +154,56 @@ class DispatchModel
         return $dispatch;
     }
 
-    public static function getDispatchComplet(): array
+    /**
+     * Récupère les quantités déjà validées par besoin
+     * @return array ['Riz' => 500, 'Huile' => 200, ...]
+     */
+    public static function getQuantitesDejaValidees(): array
+    {
+        $sql = "
+            SELECT b.nom AS besoin_nom, SUM(sdv.quantite_allouee) AS total_alloue
+            FROM s3_dispatch_validation sdv
+            JOIN s3_besoin b ON sdv.id_besoin = b.id
+            GROUP BY b.id, b.nom
+        ";
+        $statement = Flight::db()->query($sql);
+        $result = [];
+        while ($row = $statement->fetch(\PDO::FETCH_ASSOC)) {
+            $result[$row['besoin_nom']] = (int) $row['total_alloue'];
+        }
+        return $result;
+    }
+
+    /**
+     * Calcule le dispatch complet.
+     * 
+     * @param bool $onlyNonValidated Si true, utilise seulement le stock restant (dons - déjà validé)
+     *                                et les demandes qui ont encore un manque.
+     */
+    public static function getDispatchComplet($onlyNonValidated = false)
     {
         $donsModel = new \app\models\DashboardModel();
-        $dons = $donsModel::getDonsObtenus();
-        $demandes = self::getDemandesTotales();
+        $dons = $donsModel::getDonsObtenus(); // Total brut des dons matériels
+        
+        if ($onlyNonValidated) {
+            // Soustraire les quantités déjà validées du stock disponible
+            $dejaValide = self::getQuantitesDejaValidees();
+            foreach ($dejaValide as $besoinNom => $quantiteValidee) {
+                if (isset($dons[$besoinNom])) {
+                    $dons[$besoinNom] -= $quantiteValidee;
+                    if ($dons[$besoinNom] < 0) {
+                        $dons[$besoinNom] = 0;
+                    }
+                }
+            }
+            
+            // Récupérer les demandes avec manque restant
+            // (non validées + validées partiellement/non résolues)
+            $demandes = self::getDemandesAvecManque();
+        } else {
+            $demandes = self::getDemandesTotales();
+        }
+        
         $dispatch = self::calculerDispatch($dons, $demandes);
 
         return [

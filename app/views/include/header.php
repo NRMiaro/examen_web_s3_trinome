@@ -27,6 +27,10 @@
                 <i class="bi bi-grid-1x2"></i>
                 <span class="nav-label">Tableau de bord</span>
             </a>
+            <a href="<?= BASE_URL ?>/simulation" class="nav-link <?= ($active_menu ?? '') === 'simulation' ? 'active' : '' ?>">
+                <i class="bi bi-clipboard-data"></i>
+                <span class="nav-label">Simulation</span>
+            </a>
 
             <div class="nav-section-title">Gestion</div>
             <a href="<?= BASE_URL ?>/besoins" class="nav-link <?= ($active_menu ?? '') === 'besoins' ? 'active' : '' ?>">

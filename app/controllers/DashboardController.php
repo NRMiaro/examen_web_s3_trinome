@@ -17,35 +17,31 @@ class DashboardController
 
     public function index()
     {
-        // Récupérer les données depuis le Model (utilise la vue v_qte_dons_obtenus)
+        // Récupérer les données depuis le Model
         $liste_villes = DashboardModel::getListeVilles();
         $dons_disponibles = DashboardModel::getDonsObtenus();
         $besoinsVilles = DashboardModel::getBesoinsParVille();
         $total_demande = DashboardModel::getTotalDemandeParBesoin();
         
-        // Récupérer les données de dispatch
-        $dispatch_data = DispatchModel::getDispatchComplet();
+        // Récupérer le dispatch VALIDÉ depuis la BD (inclut les achats dans le calcul)
+        $dispatchIndex = DashboardModel::getDispatchValide();
         
-        // Créer un index pour accéder rapidement au statut de dispatch par (id_besoin_ville + id_besoin)
-        $dispatchIndex = [];
-        foreach ($dispatch_data['dispatch'] as $item) {
-            // Trouver l'id_besoin correspondant à ce produit
-            $cle = $item['id_besoin_ville'] . '_' . $item['id_besoin'];
-            $dispatchIndex[$cle] = $item;
-        }
-        
-        // Calculer les restes après dispatch (dons non alloués)
-        $donsRestants = $dons_disponibles; // Copie des dons initiaux
-        foreach ($dispatch_data['dispatch'] as $item) {
-            $besoinNom = $item['besoin_nom'];
+        // Calculer les dons matériels restants (dons bruts - quantités validées par dispatch)
+        $dons_alloues = DashboardModel::getDonsMontantsValidees();
+        $donsRestants = $dons_disponibles;
+        foreach ($dons_alloues as $besoinNom => $montant) {
             if (isset($donsRestants[$besoinNom])) {
-                $donsRestants[$besoinNom] -= $item['alloue'];
+                $donsRestants[$besoinNom] -= $montant;
+                if ($donsRestants[$besoinNom] < 0) {
+                    $donsRestants[$besoinNom] = 0;
+                }
             }
         }
 
         // Passer les données à la vue
         Flight::render('dashboard', [
             'page_title'       => 'Tableau de bord',
+            'active_menu'      => 'dashboard',
             'liste_villes'     => $liste_villes,
             'dons_disponibles' => $dons_disponibles,
             'dons_restants'    => $donsRestants,

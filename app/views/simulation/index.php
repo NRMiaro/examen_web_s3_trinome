@@ -1,21 +1,31 @@
-<?php include __DIR__ . '/include/header.php'; ?>
+<?php include __DIR__ . '/../include/header.php'; ?>
 
-<?php if (isset($_GET['success']) && $_GET['success'] === 'dispatch_valide'): ?>
-    <div class="alert alert-success alert-dismissible fade show" role="alert" style="margin-bottom: 20px;">
-        <i class="bi bi-check-circle-fill"></i>
-        <strong>Succès :</strong> Le dispatch a été validé avec succès.
+<?php if (isset($_GET['error']) && $_GET['error'] === 'validation_failed'): ?>
+    <div class="alert alert-danger alert-dismissible fade show" role="alert" style="margin-bottom: 20px;">
+        <i class="bi bi-exclamation-triangle-fill"></i>
+        <strong>Erreur :</strong> La validation du dispatch a échoué. Veuillez réessayer.
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
 <?php endif; ?>
 
 <div class="page-header">   
     <div class="page-header-left">
-        <div class="page-header-icon"><i class="bi bi-geo-alt-fill"></i></div>
+        <div class="page-header-icon"><i class="bi bi-clipboard-data"></i></div>
         <div class="page-header-text">
-            <h1>Tableau de bord</h1>
-            <p>Besoins par ville et dons disponibles</p>
+            <h1>Simulation de Dispatch</h1>
+            <p>Prévisualisation de l'allocation des dons avant validation</p>
         </div>
     </div>
+    <?php if (!empty($besoinsVilles)): ?>
+    <div class="page-header-right">
+        <form method="POST" action="<?= BASE_URL ?>/simulation/valider" style="display: inline;">
+            <button type="submit" class="btn btn-success" style="padding: 10px 20px; font-size: 1em; border-radius: 6px; background-color: #28a745; color: white; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 8px;">
+                <i class="bi bi-check-circle"></i>
+                Valider le Dispatch
+            </button>
+        </form>
+    </div>
+    <?php endif; ?>
 </div>
 
 <!-- Dons disponibles -->
@@ -45,6 +55,13 @@
 </div>
 
 <!-- Demandes par ville -->
+<?php if (empty($besoinsVilles)): ?>
+    <div style="text-align: center; padding: 60px 20px; background: #f8f9fa; border-radius: 12px; margin-top: 20px;">
+        <i class="bi bi-check-circle-fill" style="font-size: 3em; color: #28a745;"></i>
+        <h3 style="margin-top: 16px; color: #333;">Toutes les demandes ont été validées !</h3>
+        <p style="color: #666;">Il n'y a aucune demande en attente de dispatch. Consultez le <a href="<?= BASE_URL ?>/">tableau de bord</a> pour voir les résultats.</p>
+    </div>
+<?php endif; ?>
 <?php foreach ($besoinsVilles as $villeData): ?>
 <div style="margin-bottom: 40px;">
     <h2 style="margin-bottom: 24px; padding-bottom: 12px; border-bottom: 2px solid var(--color-primary);">
@@ -71,7 +88,6 @@
                     $manquant = $dispatchStatus['manquant'];
                     $pourcentage = $dispatchStatus['pourcentage'];
                 } else {
-                    // Aucun dispatch validé pour ce produit → non résolu
                     $statut = 'unresolved';
                     $alloue = 0;
                     $manquant = $produit['quantite'];
@@ -127,4 +143,4 @@
 </div>
 <?php endforeach; ?>
 
-<?php include __DIR__ . '/include/footer.php'; ?>
+<?php include __DIR__ . '/../include/footer.php'; ?>

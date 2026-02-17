@@ -5,6 +5,7 @@ use app\controllers\BesoinController;
 use app\controllers\DonController;
 use app\controllers\CaisseController;
 use app\controllers\AchatController;
+use app\controllers\SimulationController;
 use app\models\DonModel;
 use app\middlewares\SecurityHeadersMiddleware;
 use flight\net\Router;
@@ -16,6 +17,17 @@ $router->group('', function (Router $router) use ($app) {
     $router->get('/', function () use ($app) {
         $controller = new DashboardController($app);
         $controller->index();
+    });
+
+    // Simulation
+    $router->get('/simulation', function () use ($app) {
+        $controller = new SimulationController($app);
+        $controller->index();
+    });
+
+    $router->post('/simulation/valider', function () use ($app) {
+        $controller = new SimulationController($app);
+        $controller->valider();
     });
 
     // CRUD Besoins
