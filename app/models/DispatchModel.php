@@ -91,7 +91,9 @@ class DispatchModel
         return $statement->fetchAll(\PDO::FETCH_ASSOC);
     }
 
-
+    /**
+     * Les 3 types de stratégie de dispatch
+     */
     public const STRATEGIE_DATE = 'date';
     public const STRATEGIE_QUANTITE = 'quantite';
     public const STRATEGIE_EQUITABLE = 'equitable';
@@ -179,7 +181,7 @@ class DispatchModel
 
             $resteParBesoin[$besoinNom] = $resteActuel;
         }
-
+        
         return $dispatch;
     }
 
